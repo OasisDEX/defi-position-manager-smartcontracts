@@ -1,11 +1,10 @@
-import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { AccountGuard } from "../typechain-types/contracts/AccountGuard";
 import { AccountFactory } from "../typechain-types";
 import { Dummy } from "../typechain-types/contracts/test";
-import { Signer } from "ethers";
-import { AbiCoder } from "@ethersproject/abi";
+import { Signer, utils } from "ethers";
 
 describe("Accounts Manager", function () {
   // We define a fixture to reuse the same setup in every test.
@@ -80,6 +79,27 @@ describe("Accounts Manager", function () {
       const data = dummy.interface.encodeFunctionData("call1");
       await account.connect(user1).execute(dummy.address, data);
     })
+
+    it("should emit Narf event", async function () {
+      const receipt0 = await (await factory.connect(user1).createAccount(protocolId)).wait();
+      console.log("gas cost", receipt0.gasUsed.toString());
+      const validAddress = await user1.getAddress();
+      const len = await factory.accountsCount(validAddress);
+      const accountRecord = await factory.accounts(validAddress,len-1);
+      const account = await ethers.getContractAt("AccountImplementation",accountRecord.proxy);
+      const data = dummy.interface.encodeFunctionData("call1");
+      const receipt = await (await account.connect(user1).execute(dummy.address, data)).wait();
+      const iface = new utils.Interface([
+        'event Narf(address sender, address thisAddress, address self)',
+      ])
+      expect(receipt.events?.length).to.equal(1);
+      const details = iface.decodeEventLog('Narf',receipt.events![0].data, receipt.events![0].topics);
+      expect(details.sender).to.equal(validAddress);
+      expect(details.thisAddress).to.equal(account.address);
+      expect(details.self).to.equal(dummy.address);
+
+    })
+
     it("should revert if called by not owner", async function () {
       await (await factory.connect(user1).createAccount(protocolId)).wait();
       const validAddress = await user1.getAddress();
