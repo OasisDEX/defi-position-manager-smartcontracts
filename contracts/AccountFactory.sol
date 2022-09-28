@@ -17,7 +17,7 @@ contract AccountFactory {
     address public immutable proxyTemplate;
     AccountGuard public guard;
     uint64 public accountsGlobalCounter;
-    uint64 public constant STARTING_INDEX = 10;
+    uint64 public constant STARTING_INDEX = 10**10;
 
 
     constructor(address _implementation, address _guard) {
@@ -32,6 +32,10 @@ contract AccountFactory {
         accounts[msg.sender].push(Account(clone, protocolIdentifier, accountsGlobalCounter));
         guard.permit(msg.sender, clone, true);
         emit AccountCreated(clone, msg.sender, protocolIdentifier, accountsGlobalCounter);
+    }
+
+    function accountsCount(address user) public view returns (uint256){
+        return accounts[user].length;
     }
     
     event AccountCreated(address proxy, address user, uint32 protocolIdentifier, uint64 vaultId);
