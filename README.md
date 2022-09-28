@@ -1,13 +1,6 @@
-# Sample Hardhat Project
+#  [WIP] PositionManager proposal
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a script that deploys that contract.
+Idea is to have factory which then cheaply creates DSProxy like contract for every new position. 
+This "DSProxy" checks access permissions using central AccountGuard which permits cdpAllow like functionality
 
-Try running some of the following tasks:
-
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat run scripts/deploy.ts
-```
+ImmutableProxy and AccountImpelemtation is a trick to save gas, currently deployment of new Account cost ~160k gas

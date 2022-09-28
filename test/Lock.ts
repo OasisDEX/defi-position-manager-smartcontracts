@@ -2,36 +2,50 @@ import { time, loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
 import { ethers } from "hardhat";
+import { AccountGuard } from "../typechain-types/contracts/AccountGuard";
+import { AccountFactory } from "../typechain-types";
+import { Dummy } from "../typechain-types/contracts/test";
+import { Signer } from "ethers";
 
-describe("Lock", function () {
+describe("Accounts Manager", function () {
   // We define a fixture to reuse the same setup in every test.
   // We use loadFixture to run this setup once, snapshot that state,
   // and reset Hardhat Network to that snapshot in every test.
-  async function deployOneYearLockFixture() {
-    const ONE_YEAR_IN_SECS = 365 * 24 * 60 * 60;
-    const ONE_GWEI = 1_000_000_000;
+  async function deployFreshFactory() {
+    const Dummy = await ethers.getContractFactory("Dummy");
+    const dummy = await(await Dummy.deploy()).wait();
 
-    const lockedAmount = ONE_GWEI;
-    const unlockTime = (await time.latest()) + ONE_YEAR_IN_SECS;
+    const Guard = await ethers.getContractFactory("AccountGuard");
+    const guard = await(await Guard.deploy()).wait();
+    
+    const Account = await ethers.getContractFactory("AccountImplementation");
+    const account = await Account.deploy(guard.address);
 
-    // Contracts are deployed using the first signer/account by default
-    const [owner, otherAccount] = await ethers.getSigners();
-
-    const Lock = await ethers.getContractFactory("Lock");
-    const lock = await Lock.deploy(unlockTime, { value: lockedAmount });
-
-    return { lock, unlockTime, lockedAmount, owner, otherAccount };
+    const AccountFactory = await ethers.getContractFactory("AccountFactory");
+    const factory = await AccountFactory.deploy(account.address, guard.address);
+  
+    return { guard, factory, dummy };
   }
+  
+  let guard : AccountGuard;
+  let factory : AccountFactory;
+  let dummy : Dummy;
+  let user1 : Signer;
+  let user2 : Signer;
 
-  describe("Deployment", function () {
-    it("Should set the right unlockTime", async function () {
-      const { lock, unlockTime } = await loadFixture(deployOneYearLockFixture);
+  this.beforeAll(async function () {
+    ({ guard, factory, dummy }  = await loadFixture(deployFreshFactory));
+  })
 
-      expect(await lock.unlockTime()).to.equal(unlockTime);
+  describe("factory", function () {
+
+
+    it("Should create account", async function () {
+      await factory.createAccount(protocolId);
     });
 
-    it("Should set the right owner", async function () {
-      const { lock, owner } = await loadFixture(deployOneYearLockFixture);
+    it("account should have right owner", async function () {
+      await factory.createAccount(protocolId);
 
       expect(await lock.owner()).to.equal(owner.address);
     });
