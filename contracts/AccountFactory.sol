@@ -107,11 +107,12 @@ contract AccountFactory is Constants {
         public
         returns (address newProxy)
     {
+        require(migrated[msg.sender] != address(0), "factory/already-migrated");
         IManager manager = IManager(
             serviceRegistry.getRegisteredService(CDP_MANAGER_KEY)
         );
         // assume the first proxy from new factory is the dedicated maker migration one
-        newProxy = accounts[msg.sender][0].proxy;
+        newProxy = migrated[msg.sender];
         uint256[] memory _cdpIds = cdpIds;
         uint256 length = _cdpIds.length;
 
