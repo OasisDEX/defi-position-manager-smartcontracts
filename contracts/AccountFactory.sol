@@ -59,25 +59,38 @@ contract AccountFactory is Constants {
         return accounts[user].length;
     }
 
-    function getMakerProxy(address _user) public view returns (address) {
+    /// @dev Returns the correct user proxy depending on the migration status
+    /// @param user address of the user
+    /// @return proxyAddr address of the users proxy
+    function getMakerProxy(address user)
+        public
+        view
+        returns (address proxyAddr)
+    {
         IProxyRegistry mcdRegistry = IProxyRegistry(
             serviceRegistry.getRegisteredService(PROXY_REGISTRY_KEY)
         );
-        address proxyAddr = mcdRegistry.proxies(_user);
-        if (migrated[_user] != address(0)) {
-            return migrated[_user];
+        proxyAddr = mcdRegistry.proxies(user);
+        if (migrated[user] != address(0)) {
+            return migrated[user];
         }
 
         return proxyAddr;
     }
 
-    function migrateMaker(uint256[] calldata cdpIds) public returns (address) {
+    /// @dev transfers ownership of all CdpIds to the newly created Oasis proxy
+    /// @param cdpIds list of user owned cdpIds
+    /// @return newProxy address of the users Oasis proxy
+    function migrateMaker(uint256[] calldata cdpIds)
+        public
+        returns (address newProxy)
+    {
         require(migrated[msg.sender] == address(0), "factory/already-migrated");
         IManager manager = IManager(
             serviceRegistry.getRegisteredService(CDP_MANAGER_KEY)
         );
         // protocol identifier set as 0 for maker (?)
-        address newProxy = createAccount(0);
+        newProxy = createAccount(0);
         uint256[] memory _cdpIds = cdpIds;
         uint256 length = _cdpIds.length;
         for (uint256 i; i < length; i++) {
@@ -87,15 +100,18 @@ contract AccountFactory is Constants {
         return newProxy;
     }
 
+    /// @dev transfers ownership of all CdpIds to the existing Oasis proxy
+    /// @param cdpIds list of user owned cdpIds
+    /// @return newProxy address of the users Oasis proxy
     function migrateAdditionalVaults(uint256[] calldata cdpIds)
         public
-        returns (address)
+        returns (address newProxy)
     {
         IManager manager = IManager(
             serviceRegistry.getRegisteredService(CDP_MANAGER_KEY)
         );
-
-        address newProxy = accounts[msg.sender][0].proxy;
+        // assume the first proxy from new factory is the dedicated maker migration one
+        newProxy = accounts[msg.sender][0].proxy;
         uint256[] memory _cdpIds = cdpIds;
         uint256 length = _cdpIds.length;
 
