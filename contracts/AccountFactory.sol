@@ -90,6 +90,7 @@ contract AccountFactory is Constants {
             serviceRegistry.getRegisteredService(CDP_MANAGER_KEY)
         );
         // protocol identifier set as 0 for maker (?)
+        // TODO : consider using GetCdps contract to get all cdpIds for address
         newProxy = createAccount(0);
         uint256[] memory _cdpIds = cdpIds;
         uint256 length = _cdpIds.length;
