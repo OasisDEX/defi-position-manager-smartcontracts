@@ -24,6 +24,7 @@ contract AccountFactory is Constants {
     mapping(address => address) public migrated;
 
     address public immutable proxyTemplate;
+    address public immutable self;
     AccountGuard public guard;
     uint64 public accountsGlobalCounter;
     uint64 public constant STARTING_INDEX = 10**10;
@@ -37,6 +38,7 @@ contract AccountFactory is Constants {
         accountsGlobalCounter = STARTING_INDEX;
         guard = AccountGuard(_guard);
         serviceRegistry = _serviceRegistry;
+        self = address(this);
     }
 
     function createAccount(uint32 protocolIdentifier) public returns (address) {
@@ -57,6 +59,11 @@ contract AccountFactory is Constants {
 
     function accountsCount(address user) public view returns (uint256) {
         return accounts[user].length;
+    }
+
+    modifier onlyDelegate() {
+        require(address(this) != self, "bot/only-delegate");
+        _;
     }
 
     /// @dev Returns the correct user proxy depending on the migration status
@@ -83,14 +90,13 @@ contract AccountFactory is Constants {
     /// @return newProxy address of the users Oasis proxy
     function migrateMaker(uint256[] calldata cdpIds)
         public
+        onlyDelegate
         returns (address newProxy)
     {
         require(migrated[msg.sender] == address(0), "factory/already-migrated");
         IManager manager = IManager(
             serviceRegistry.getRegisteredService(CDP_MANAGER_KEY)
         );
-        // protocol identifier set as 0 for maker (?)
-        // TODO : consider using GetCdps contract to get all cdpIds for address
         newProxy = createAccount(0);
         uint256[] memory _cdpIds = cdpIds;
         uint256 length = _cdpIds.length;
@@ -106,6 +112,7 @@ contract AccountFactory is Constants {
     /// @return newProxy address of the users Oasis proxy
     function migrateAdditionalVaults(uint256[] calldata cdpIds)
         public
+        onlyDelegate
         returns (address newProxy)
     {
         require(migrated[msg.sender] != address(0), "factory/already-migrated");
