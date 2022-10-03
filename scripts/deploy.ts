@@ -15,7 +15,7 @@ async function main() {
   console.log("AccountImplementation gas ",receipt2.deployTransaction.gasLimit.toString())
 
   const AccountFactory = await ethers.getContractFactory("AccountFactory");
-  const accountFactoryInstance = await AccountFactory.deploy(implementationInstance.address, guardInstance.address);
+  const accountFactoryInstance = await AccountFactory.deploy(implementationInstance.address, guardInstance.address, '0x9b4Ae7b164d195df9C4Da5d08Be88b2848b2EaDA');
 
   const receipt3 = await accountFactoryInstance.deployed();
   console.log("AccountFactory gas ",receipt3.deployTransaction.gasLimit.toString())

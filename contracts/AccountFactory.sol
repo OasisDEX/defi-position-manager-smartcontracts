@@ -25,7 +25,7 @@ contract AccountFactory is Constants {
 
     address public immutable proxyTemplate;
     address public immutable self;
-    AccountGuard public guard;
+    AccountGuard public immutable guard;
     uint64 public accountsGlobalCounter;
     uint64 public constant STARTING_INDEX = 10**10;
 
