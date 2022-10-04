@@ -20,15 +20,15 @@ async function main() {
   const receipt3 = await accountFactoryInstance.deployed();
   console.log("AccountFactory gas ",receipt3.deployTransaction.gasLimit.toString())
 
-  const tx = await accountFactoryInstance.createAccount(123);
+  const tx = await accountFactoryInstance["createAccount(uint32)"](0);
   const txReceipt = await tx.wait();
   console.log("first account ",txReceipt.gasUsed.toString())
 
-  const tx2 = await accountFactoryInstance.createAccount(123);
+  const tx2 = await accountFactoryInstance["createAccount(uint32)"](0);
   const txReceipt2 = await tx2.wait();
   console.log("second account ",txReceipt2.gasUsed.toString())
   
-  const tx3 = await accountFactoryInstance.connect( await ethers.provider.getSigner(2)).createAccount(123);
+  const tx3 = await accountFactoryInstance.connect( await ethers.provider.getSigner(2))["createAccount(uint32)"](0);
   const txReceipt3 = await tx3.wait();
   console.log("first account second user ",txReceipt3.gasUsed.toString())
 

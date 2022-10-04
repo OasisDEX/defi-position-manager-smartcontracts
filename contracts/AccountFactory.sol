@@ -25,7 +25,7 @@ contract AccountFactory is Constants {
 
     address public immutable proxyTemplate;
     address public immutable self;
-    AccountGuard public immutable guard;
+    AccountGuard public guard;
     uint64 public accountsGlobalCounter;
     uint64 public constant STARTING_INDEX = 10**10;
 
@@ -41,16 +41,27 @@ contract AccountFactory is Constants {
         self = address(this);
     }
 
-    function createAccount(uint32 protocolIdentifier) public returns (address) {
+    function createAccount(uint32 protocolIdentifier)
+        public
+        returns (address clone)
+    {
+        clone = createAccount(protocolIdentifier, msg.sender);
+        return clone;
+    }
+
+    function createAccount(uint32 protocolIdentifier, address user)
+        public
+        returns (address)
+    {
         accountsGlobalCounter++;
         address clone = Clones.clone(proxyTemplate);
-        accounts[msg.sender].push(
+        accounts[user].push(
             Account(clone, protocolIdentifier, accountsGlobalCounter)
         );
-        guard.permit(msg.sender, clone, true);
+        guard.permit(user, clone, true);
         emit AccountCreated(
             clone,
-            msg.sender,
+            user,
             protocolIdentifier,
             accountsGlobalCounter
         );
@@ -97,7 +108,10 @@ contract AccountFactory is Constants {
         IManager manager = IManager(
             serviceRegistry.getRegisteredService(CDP_MANAGER_KEY)
         );
-        newProxy = createAccount(0);
+        AccountFactory _factory = AccountFactory(
+            serviceRegistry.getRegisteredService(ACCOUNT_FACTORY_KEY)
+        );
+        newProxy = _factory.createAccount(0, msg.sender);
         uint256[] memory _cdpIds = cdpIds;
         uint256 length = _cdpIds.length;
         for (uint256 i; i < length; i++) {
