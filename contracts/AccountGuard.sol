@@ -6,7 +6,7 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/proxy/Proxy.sol";
 
 contract AccountGuard {
-    mapping(address => bool) exists;
+    address factory = address(0);
     mapping(address => mapping(address => bool)) allowed;
 
     function canCall(address proxy, address operator)
@@ -17,17 +17,17 @@ contract AccountGuard {
         return allowed[operator][proxy];
     }
 
+    function initializeFactory() public{
+        require(factory == address(0),"account-guard/factory-set");
+        factory = msg.sender;
+    }
+
     function permit(
         address caller,
         address target,
         bool allowance
     ) external {
-        if (!exists[target]) {
-            exists[target] = true;
-            require(allowance == true, "account-guard/at-least-one-owner");
-        } else {
-            require(allowed[msg.sender][target], "account-guard/not-owner");
-        }
+        require(allowed[msg.sender][target] || msg.sender == factory, "account-guard/not-owner");
         allowed[caller][target] = allowance;
     }
 }
