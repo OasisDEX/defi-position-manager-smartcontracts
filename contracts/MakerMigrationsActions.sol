@@ -3,15 +3,10 @@ pragma solidity ^0.8.9;
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
-import {ImmutableProxy} from "./ImmutableProxy.sol";
-import {AccountGuard} from "./AccountGuard.sol";
-import {IProxyRegistry} from "./interfaces/IProxyRegistry.sol";
 import {IManager} from "./interfaces/IManager.sol";
 import {IServiceRegistry} from "./interfaces/IServiceRegistry.sol";
 import {Constants} from "./utils/Constants.sol";
-import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 import {AccountFactory} from "./AccountFactory.sol";
-import "hardhat/console.sol";
 
 contract MakerMigrationsActions is Constants {
     IServiceRegistry public immutable serviceRegistry;
@@ -19,7 +14,6 @@ contract MakerMigrationsActions is Constants {
     mapping(address => address) public migrated;
 
     address public immutable self;
-    AccountGuard public guard;
     uint64[] public protocolCounter;
 
     constructor(IServiceRegistry _serviceRegistry) {

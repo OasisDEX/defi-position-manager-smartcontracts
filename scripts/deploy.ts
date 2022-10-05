@@ -41,20 +41,10 @@ async function main() {
   const txReceipt2 = await tx2.wait();
   console.log("second account ", txReceipt2.gasUsed.toString());
 
-/*   const tx3 = await accountFactoryInstance
+  const tx3 = await accountFactoryInstance
     .connect(await ethers.provider.getSigner(2))
     ["createAccount(uint32)"](1);
-  const txReceipt3 = await tx3.wait(); */
-
-  const tx4 = await accountFactoryInstance
-    .connect(await ethers.provider.getSigner(1))
-    .addNewProtocol();
-  const txReceipt4 = await tx4.wait();
-  const tx5 = await accountFactoryInstance
-    .connect(await ethers.provider.getSigner(2))
-    ["createAccount(uint32)"](1);
-  const txReceipt5 = await tx5.wait();
-
+  const txReceipt3 = await tx3.wait();
 }
 
 // We recommend this pattern to be able to use async/await everywhere
