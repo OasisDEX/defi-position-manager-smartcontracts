@@ -6,7 +6,7 @@ pragma solidity ^0.8.9;
 import {ImmutableProxy} from "./ImmutableProxy.sol";
 import {AccountGuard} from "./AccountGuard.sol";
 import {IProxyRegistry} from "./interfaces/IProxyRegistry.sol";
-import {IManager} from "./interfaces/IManager.sol";
+import {ManagerLike} from "./interfaces/ManagerLike.sol";
 import {IServiceRegistry} from "./interfaces/IServiceRegistry.sol";
 import {Constants} from "./utils/Constants.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
