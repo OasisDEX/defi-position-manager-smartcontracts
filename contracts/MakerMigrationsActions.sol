@@ -3,7 +3,7 @@ pragma solidity ^0.8.9;
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
-import {IManager} from "./interfaces/IManager.sol";
+import {ManagerLike} from "./interfaces/ManagerLike.sol";
 import {IServiceRegistry} from "./interfaces/IServiceRegistry.sol";
 import {Constants} from "./utils/Constants.sol";
 import {AccountFactory} from "./AccountFactory.sol";
@@ -36,7 +36,7 @@ contract MakerMigrationsActions is Constants {
         returns (address newProxy)
     {
         require(migrated[msg.sender] == address(0), "factory/already-migrated");
-        IManager manager = IManager(
+        ManagerLike manager = ManagerLike(
             serviceRegistry.getRegisteredService(CDP_MANAGER_KEY)
         );
         AccountFactory _factory = AccountFactory(
@@ -61,7 +61,7 @@ contract MakerMigrationsActions is Constants {
         returns (address newProxy)
     {
         require(migrated[msg.sender] != address(0), "factory/already-migrated");
-        IManager manager = IManager(
+        ManagerLike manager = ManagerLike(
             serviceRegistry.getRegisteredService(CDP_MANAGER_KEY)
         );
         // assume the first proxy from new factory is the dedicated maker migration one

@@ -4,6 +4,7 @@
   "main": "index.js",
   "license": "MIT",
   "devDependencies": {
+    "dotenv": "^16.0.3",
     "@ethersproject/abi": "^5.4.7",
     "@ethersproject/providers": "^5.4.7",
     "@nomicfoundation/hardhat-chai-matchers": "^1.0.0",
