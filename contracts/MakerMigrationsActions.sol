@@ -42,7 +42,7 @@ contract MakerMigrationsActions is Constants {
         AccountFactory _factory = AccountFactory(
             serviceRegistry.getRegisteredService(ACCOUNT_FACTORY_KEY)
         );
-        newProxy = _factory.createAccount(0, msg.sender);
+        newProxy = _factory.createAccount(msg.sender);
         uint256[] memory _cdpIds = cdpIds;
         uint256 length = _cdpIds.length;
         for (uint256 i; i < length; i++) {

@@ -15,19 +15,14 @@ import "hardhat/console.sol";
 contract AccountFactory is Constants {
     IServiceRegistry public immutable serviceRegistry;
 
-    struct Account {
-        address proxy;
-        uint32 protocolIdentifier; //Maybe not needed
-        uint64 vaultId;
-    }
-
-    mapping(address => Account[]) public accounts;
+    mapping(address => address[]) public accounts; //owner => proxy address
+    mapping(uint256 => address) public positionsToAccounts;
+    mapping(address => address) public migrated;
 
     address public immutable proxyTemplate;
     address public immutable self;
     AccountGuard public guard;
     uint64 public accountsGlobalCounter;
-    uint64 public constant STARTING_INDEX = 10**10;
 
     constructor(
         address _implementation,
@@ -35,34 +30,35 @@ contract AccountFactory is Constants {
         IServiceRegistry _serviceRegistry
     ) {
         proxyTemplate = address(new ImmutableProxy(_implementation));
-        accountsGlobalCounter = STARTING_INDEX;
+        accountsGlobalCounter = 0;
         guard = AccountGuard(_guard);
         serviceRegistry = _serviceRegistry;
         self = address(this);
+        guard.initializeFactory();
     }
 
-    function createAccount(uint32 protocolIdentifier)
+    function createAccount()
         public
         returns (address clone)
     {
-        clone = createAccount(protocolIdentifier, msg.sender);
+        clone = createAccount(msg.sender);
         return clone;
     }
 
-    function createAccount(uint32 protocolIdentifier, address user)
+    function createAccount(address user)
         public
         returns (address)
     {
         accountsGlobalCounter++;
         address clone = Clones.clone(proxyTemplate);
+        positionsToAccounts[accountsGlobalCounter] = clone;
         accounts[user].push(
-            Account(clone, protocolIdentifier, accountsGlobalCounter)
+            clone
         );
         guard.permit(user, clone, true);
         emit AccountCreated(
             clone,
             user,
-            protocolIdentifier,
             accountsGlobalCounter
         );
         return clone;
@@ -75,7 +71,6 @@ contract AccountFactory is Constants {
     event AccountCreated(
         address proxy,
         address user,
-        uint32 protocolIdentifier,
         uint64 vaultId
     );
 }
