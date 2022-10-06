@@ -5,16 +5,20 @@ pragma solidity ^0.8.9;
 // import "hardhat/console.sol";
 import "@openzeppelin/contracts/proxy/Proxy.sol";
 
-contract ImmutableProxy is Proxy{
-
+contract ImmutableProxy is Proxy {
     address public immutable implementation;
 
-    constructor(address _implementation) {
-        implementation = _implementation;
+    constructor(address __implementation) {
+        implementation = __implementation;
     }
 
-    function _implementation() override internal view virtual returns (address){
+    function _implementation()
+        internal
+        view
+        virtual
+        override
+        returns (address)
+    {
         return implementation;
     }
-    
 }
