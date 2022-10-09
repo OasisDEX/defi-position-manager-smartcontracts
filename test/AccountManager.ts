@@ -19,6 +19,8 @@ describe("Accounts Manager", function () {
 
     const Guard = await ethers.getContractFactory("AccountGuard");
     const guard = await(await Guard.deploy()).deployed();
+
+    await guard.setWhitelist(await dummy.address);
     
     const Account = await ethers.getContractFactory("AccountImplementation");
     const account = await Account.deploy(guard.address);
@@ -87,9 +89,21 @@ describe("Accounts Manager", function () {
       await account.connect(user1).execute(dummy.address, data);
     })
 
-    it("should emit Narf event", async function () {
+    it("should fail if calling not whitelisted address", async function () {
+      await (await factory.connect(user1)['createAccount()']()).wait();
+      const validAddress = await user1.getAddress();
+      const len = await factory.accountsCount(validAddress);
+      const accountRecord = await factory.accounts(validAddress,len.toNumber()-1);
+      const account = await ethers.getContractAt("AccountImplementation",accountRecord);
+      const data = dummy.interface.encodeFunctionData("call1");
+      let tx = account.connect(user1).execute(guard.address, data);
+      await expect(tx).to.be.revertedWith("account-guard/illegal-target");
+      tx = account.connect(user1).execute(await user2.getAddress(), data);
+      await expect(tx).to.be.revertedWith("account-guard/illegal-target");
+    })
+
+    it("should emit Narf event if executed", async function () {
       const receipt0 = await (await factory.connect(user1)['createAccount()']()).wait();
-      console.log("gas cost", receipt0.gasUsed.toString());
       const validAddress = await user1.getAddress();
       const len = await factory.accountsCount(validAddress);
       const accountRecord = await factory.accounts(validAddress,len.toNumber()-1);
@@ -103,6 +117,25 @@ describe("Accounts Manager", function () {
       const details = iface.decodeEventLog('Narf',receipt.events![0].data, receipt.events![0].topics);
       expect(details.sender).to.equal(validAddress);
       expect(details.thisAddress).to.equal(account.address);
+      expect(details.self).to.equal(dummy.address);
+
+    })
+    
+    it("should emit Narf event if called", async function () {
+      const receipt0 = await (await factory.connect(user1)['createAccount()']()).wait();
+      const validAddress = await user1.getAddress();
+      const len = await factory.accountsCount(validAddress);
+      const accountRecord = await factory.accounts(validAddress,len.toNumber()-1);
+      const account = await ethers.getContractAt("AccountImplementation",accountRecord);
+      const data = dummy.interface.encodeFunctionData("call1");
+      const receipt = await (await account.connect(user1).send(dummy.address, data)).wait();
+      const iface = new utils.Interface([
+        'event Narf(address sender, address thisAddress, address self)',
+      ])
+      expect(receipt.events?.length).to.equal(1);
+      const details = iface.decodeEventLog('Narf',receipt.events![0].data, receipt.events![0].topics);
+      expect(details.sender).to.equal(account.address);
+      expect(details.thisAddress).to.equal(dummy.address);
       expect(details.self).to.equal(dummy.address);
 
     })

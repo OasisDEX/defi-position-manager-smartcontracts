@@ -4,10 +4,20 @@ pragma solidity ^0.8.9;
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
 import "@openzeppelin/contracts/proxy/Proxy.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract AccountGuard {
+contract AccountGuard is Ownable {
     address factory = address(0);
-    mapping(address => mapping(address => bool)) allowed;
+    mapping(address => mapping(address => bool)) private allowed;
+    mapping(address => bool) private whitelisted;
+
+    function isWhitelisted(address target) public view returns(bool){
+        return whitelisted[target];
+    }
+
+    function setWhitelist(address target) public{
+        whitelisted[target] = true;
+    }
 
     function canCall(address proxy, address operator)
         external
