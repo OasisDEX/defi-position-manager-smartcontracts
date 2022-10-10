@@ -15,8 +15,8 @@ contract AccountGuard is Ownable {
         return whitelisted[target];
     }
 
-    function setWhitelist(address target) public{
-        whitelisted[target] = true;
+    function setWhitelist(address target, bool status) public onlyOwner{
+        whitelisted[target] = status;
     }
 
     function canCall(address proxy, address operator)

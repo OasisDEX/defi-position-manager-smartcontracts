@@ -20,7 +20,7 @@ describe("Accounts Manager", function () {
     const Guard = await ethers.getContractFactory("AccountGuard");
     const guard = await(await Guard.deploy()).deployed();
 
-    await guard.setWhitelist(await dummy.address);
+    await guard.setWhitelist(await dummy.address, true);
     
     const Account = await ethers.getContractFactory("AccountImplementation");
     const account = await Account.deploy(guard.address);
@@ -46,6 +46,34 @@ describe("Accounts Manager", function () {
     const receipt = await tx.wait();
   })
 
+  describe("guard", function(){
+    
+    it("Should have owner set to deployer", async function(){
+      const owner = await guard.owner();
+      expect(owner).to.be.equal(await  ethers.provider.getSigner(0).getAddress());
+    })
+
+    it("Should allow seting whitelist by owner", async function(){
+      const testAddress = await user1.getAddress();
+      const initialStatus = await guard.isWhitelisted(testAddress);
+      await guard.setWhitelist(testAddress, !initialStatus);
+      const statusAfterFirstChange = await guard.isWhitelisted(testAddress);
+      expect(statusAfterFirstChange).to.be.not.equal(initialStatus);
+      await guard.setWhitelist(testAddress, initialStatus);
+      const statusAfterSecondChange = await guard.isWhitelisted(testAddress);
+      expect(statusAfterSecondChange).to.be.equal(initialStatus);
+
+    })
+
+    it("Should deny seting whitelist by not owner", async function(){
+      const testAddress = await user1.getAddress();
+      const initialStatus = await guard.isWhitelisted(testAddress);
+      const tx = guard.connect(user1).setWhitelist(testAddress, !initialStatus, {gasLimit:2000000});
+      await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
+    })
+  })
+
+  
   describe("factory", function () {
 
 
@@ -65,7 +93,7 @@ describe("Accounts Manager", function () {
       const acountCountAfter = await factory.accountsCount(await user1.getAddress());
       const acountCountAfter2 = await factory.accountsCount(await user2.getAddress());
 
-      expect(acountCountBefore+1).to.equal(acountCountAfter);
+      expect(acountCountBefore.add(1)).to.equal(acountCountAfter);
       expect(acountCountBefore2).to.equal(acountCountAfter2);
     });
 
