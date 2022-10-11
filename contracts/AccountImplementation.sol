@@ -25,7 +25,7 @@ contract AccountImplementation {
         payable
         auth{
             require(_target != address(0x0));
-            require(guard.isWhitelisted(_target),"account-guard/illegal-targetaccount-guard/illegal-targe");
+            require(guard.isWhitelisted(_target),"account-guard/illegal-target");
             (bool status,) = (_target).call{ value:msg.value }(_data);
             require(status, "account-guard/call-failed");
     }
