@@ -37,30 +37,18 @@ contract AccountFactory is Constants {
         guard.initializeFactory();
     }
 
-    function createAccount()
-        public
-        returns (address clone)
-    {
+    function createAccount() public returns (address clone) {
         clone = createAccount(msg.sender);
         return clone;
     }
 
-    function createAccount(address user)
-        public
-        returns (address)
-    {
+    function createAccount(address user) public returns (address) {
         accountsGlobalCounter++;
         address clone = Clones.clone(proxyTemplate);
         positionsToAccounts[accountsGlobalCounter] = clone;
-        accounts[user].push(
-            clone
-        );
+        accounts[user].push(clone);
         guard.permit(user, clone, true);
-        emit AccountCreated(
-            clone,
-            user,
-            accountsGlobalCounter
-        );
+        emit AccountCreated(clone, user, accountsGlobalCounter);
         return clone;
     }
 
@@ -68,9 +56,5 @@ contract AccountFactory is Constants {
         return accounts[user].length;
     }
 
-    event AccountCreated(
-        address proxy,
-        address user,
-        uint64 vaultId
-    );
+    event AccountCreated(address proxy, address user, uint64 vaultId);
 }

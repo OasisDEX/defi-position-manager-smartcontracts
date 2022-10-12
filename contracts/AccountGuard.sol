@@ -17,8 +17,8 @@ contract AccountGuard {
         return allowed[operator][proxy];
     }
 
-    function initializeFactory() public{
-        require(factory == address(0),"account-guard/factory-set");
+    function initializeFactory() public {
+        require(factory == address(0), "account-guard/factory-set");
         factory = msg.sender;
     }
 
@@ -27,7 +27,10 @@ contract AccountGuard {
         address target,
         bool allowance
     ) external {
-        require(allowed[msg.sender][target] || msg.sender == factory, "account-guard/not-owner");
+        require(
+            allowed[msg.sender][target] || msg.sender == factory,
+            "account-guard/not-owner"
+        );
         allowed[caller][target] = allowance;
     }
 }

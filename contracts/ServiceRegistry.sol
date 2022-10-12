@@ -39,7 +39,11 @@ contract ServiceRegistry {
         if (lastExecuted[operationHash] == 0 && reqDelay > 0) {
             // not called before, scheduled for execution
             lastExecuted[operationHash] = block.timestamp;
-            emit ChangeScheduled(operationHash, block.timestamp + reqDelay, msg.data);
+            emit ChangeScheduled(
+                operationHash,
+                block.timestamp + reqDelay,
+                msg.data
+            );
         } else {
             require(
                 block.timestamp - reqDelay > lastExecuted[operationHash],
@@ -82,7 +86,11 @@ contract ServiceRegistry {
         requiredDelay = newDelay;
     }
 
-    function getServiceNameHash(string memory name) external pure returns (bytes32) {
+    function getServiceNameHash(string memory name)
+        external
+        pure
+        returns (bytes32)
+    {
         return keccak256(abi.encodePacked(name));
     }
 
@@ -92,7 +100,10 @@ contract ServiceRegistry {
         validateInput(68)
         delayedExecution
     {
-        require(namedService[serviceNameHash] == address(0), "registry/service-override");
+        require(
+            namedService[serviceNameHash] == address(0),
+            "registry/service-override"
+        );
         namedService[serviceNameHash] = serviceAddress;
     }
 
@@ -102,21 +113,39 @@ contract ServiceRegistry {
         validateInput(68)
         delayedExecution
     {
-        require(namedService[serviceNameHash] != address(0), "registry/service-does-not-exist");
+        require(
+            namedService[serviceNameHash] != address(0),
+            "registry/service-does-not-exist"
+        );
         namedService[serviceNameHash] = serviceAddress;
     }
 
-    function removeNamedService(bytes32 serviceNameHash) external onlyOwner validateInput(36) {
-        require(namedService[serviceNameHash] != address(0), "registry/service-does-not-exist");
+    function removeNamedService(bytes32 serviceNameHash)
+        external
+        onlyOwner
+        validateInput(36)
+    {
+        require(
+            namedService[serviceNameHash] != address(0),
+            "registry/service-does-not-exist"
+        );
         namedService[serviceNameHash] = address(0);
         emit NamedServiceRemoved(serviceNameHash);
     }
 
-    function getRegisteredService(string memory serviceName) external view returns (address) {
+    function getRegisteredService(string memory serviceName)
+        external
+        view
+        returns (address)
+    {
         return namedService[keccak256(abi.encodePacked(serviceName))];
     }
 
-    function getServiceAddress(bytes32 serviceNameHash) external view returns (address) {
+    function getServiceAddress(bytes32 serviceNameHash)
+        external
+        view
+        returns (address)
+    {
         return namedService[serviceNameHash];
     }
 
@@ -125,7 +154,10 @@ contract ServiceRegistry {
         onlyOwner
         validateInput(36)
     {
-        require(lastExecuted[scheduledExecution] > 0, "registry/execution-not-scheduled");
+        require(
+            lastExecuted[scheduledExecution] > 0,
+            "registry/execution-not-scheduled"
+        );
         lastExecuted[scheduledExecution] = 0;
         emit ChangeCancelled(scheduledExecution);
     }

@@ -5,24 +5,22 @@ pragma solidity ^0.8.9;
 // import "hardhat/console.sol";
 import "@openzeppelin/contracts/proxy/Proxy.sol";
 
-contract Dummy{
-
+contract Dummy {
     address immutable _self;
 
-    constructor(){
+    constructor() {
         _self = address(this);
     }
 
-    function call1() public{
+    function call1() public {
         emit Narf(msg.sender, address(this), _self);
     }
 
-    function call2() public{
+    function call2() public {
         emit Point(msg.sender, address(this), _self);
     }
 
     event Narf(address sender, address thisAddress, address self);
 
     event Point(address sender, address thisAddress, address self);
-    
 }

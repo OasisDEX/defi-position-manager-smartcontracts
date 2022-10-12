@@ -2,7 +2,10 @@
 pragma solidity ^0.8.0;
 
 interface VatLike {
-    function urns(bytes32, address) external view returns (uint256 ink, uint256 art);
+    function urns(bytes32, address)
+        external
+        view
+        returns (uint256 ink, uint256 art);
 
     function ilks(bytes32)
         external
