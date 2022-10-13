@@ -51,7 +51,7 @@ describe("Borrow - new Proxy", function () {
     const cdpManager = await ethers.getContractAt("ManagerLike", CDP_MANAGER);
     const mcdView = await ethers.getContractAt("McdViewLike", MCD_VIEW);
     await guard.setWhitelist(await proxyAction.address, true);
-  
+
     return { guard, factory, dummy, proxyAction, cdpManager, mcdView };
   }
 

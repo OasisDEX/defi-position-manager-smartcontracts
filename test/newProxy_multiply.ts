@@ -1,6 +1,4 @@
-import {
-  loadFixture,
-} from "@nomicfoundation/hardhat-network-helpers";
+import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import hre from "hardhat";
 import { ethers } from "hardhat";
@@ -15,7 +13,11 @@ import {
 import BigNumber from "bignumber.js";
 import { Signer } from "ethers";
 import { HardhatUtils } from "./../scripts/common/hardhat.utils";
-import { ensureBigNumber, forgeUnoswapCalldata, getETHPrice } from "../scripts/common/utils";
+import {
+  ensureBigNumber,
+  forgeUnoswapCalldata,
+  getETHPrice,
+} from "../scripts/common/utils";
 import { ONE_INCH_V4_ROUTER } from "../scripts/common/addresses";
 
 const CDP_MANAGER = "0x5ef30b9986345249bc32d8928B7ee64DE9435E39";
@@ -167,7 +169,6 @@ describe("Multiply - new Proxy", function () {
   }
 
   this.beforeAll(async function () {
-    
     user1 = ethers.provider.getSigner(2);
     user2 = ethers.provider.getSigner(3);
 
@@ -235,20 +236,20 @@ describe("Multiply - new Proxy", function () {
 
       const receipt = await tx.wait();
       const abi = [
-        'event MultipleActionCalled(string methodName, uint indexed cdpId, uint swapMinAmount, uint swapOptimistAmount, uint collateralLeft, uint daiLeft)',
-      ]
-      const iface = new ethers.utils.Interface(abi)
+        "event MultipleActionCalled(string methodName, uint indexed cdpId, uint swapMinAmount, uint swapOptimistAmount, uint collateralLeft, uint daiLeft)",
+      ];
+      const iface = new ethers.utils.Interface(abi);
       const events = receipt?.events?.filter((x: any) => {
-        return x.topics[0] === iface.getEventTopic('MultipleActionCalled')
-      })
+        return x.topics[0] === iface.getEventTopic("MultipleActionCalled");
+      });
 
-      const logs = events!.map(x=>iface.parseLog(x) as any);
-      const ratio = ensureBigNumber(await mcdView.getRatio(logs[0].args.cdpId.toString(), false)).shiftedBy(-18);
+      const logs = events!.map((x) => iface.parseLog(x) as any);
+      const ratio = ensureBigNumber(
+        await mcdView.getRatio(logs[0].args.cdpId.toString(), false)
+      ).shiftedBy(-18);
 
-      expect(ratio.toNumber()).to.be.greaterThan(1.9) 
-      expect(ratio.toNumber()).to.be.lessThan(2.1) 
-
-
+      expect(ratio.toNumber()).to.be.greaterThan(1.9);
+      expect(ratio.toNumber()).to.be.lessThan(2.1);
     });
   });
 });

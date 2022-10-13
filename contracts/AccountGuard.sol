@@ -11,11 +11,11 @@ contract AccountGuard is Ownable {
     mapping(address => mapping(address => bool)) private allowed;
     mapping(address => bool) private whitelisted;
 
-    function isWhitelisted(address target) public view returns(bool){
+    function isWhitelisted(address target) public view returns (bool) {
         return whitelisted[target];
     }
 
-    function setWhitelist(address target, bool status) public onlyOwner{
+    function setWhitelist(address target, bool status) public onlyOwner {
         whitelisted[target] = status;
     }
 
