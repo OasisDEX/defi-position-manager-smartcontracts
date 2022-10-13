@@ -14,16 +14,14 @@ contract MakerMigrationsActions is Constants {
     mapping(address => address) public migrated;
 
     address public immutable self;
-    uint64[] public protocolCounter;
 
     constructor(IServiceRegistry _serviceRegistry) {
         serviceRegistry = _serviceRegistry;
         self = address(this);
-        protocolCounter.push(0);
     }
 
     modifier onlyDelegate() {
-        require(address(this) != self, "bot/only-delegate");
+        require(address(this) != self, "maker-migrations-actions/only-delegate");
         _;
     }
 

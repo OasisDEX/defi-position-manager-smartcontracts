@@ -10,6 +10,7 @@ contract AccountGuard is Ownable {
     address factory = address(0);
     mapping(address => mapping(address => bool)) private allowed;
     mapping(address => bool) private whitelisted;
+    mapping(address => address) private owners;
 
     function isWhitelisted(address target) public view returns (bool) {
         return whitelisted[target];
@@ -41,6 +42,18 @@ contract AccountGuard is Ownable {
             allowed[msg.sender][target] || msg.sender == factory,
             "account-guard/not-owner"
         );
+        if(msg.sender == factory && allowance){
+            owners[target] = caller;
+        }else{
+            require(owners[target] != caller, "account-guard/cant-deny-owner");
+        }
         allowed[caller][target] = allowance;
+    }
+
+    function changeOwner(
+        address newOwner,
+        address target) external{
+        require(owners[target] == msg.sender, "account-guard/only-proxy-owner");
+        owners[target] = newOwner;
     }
 }
