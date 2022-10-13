@@ -1,12 +1,10 @@
 import {
-  impersonateAccount,
   loadFixture,
 } from "@nomicfoundation/hardhat-network-helpers";
 import { expect } from "chai";
 import hre from "hardhat";
 import { ethers } from "hardhat";
 import { getMultiplyParams } from "@oasisdex/multiply";
-import { AccountGuard } from "../typechain-types/contracts/AccountGuard";
 import {
   AccountFactory,
   AccountImplementation,
@@ -58,6 +56,7 @@ describe("Multiply - new Proxy", function () {
     );
     const cdpManager = await ethers.getContractAt("ManagerLike", CDP_MANAGER);
     const mcdView = await ethers.getContractAt("McdViewLike", MCD_VIEW);
+    await guard.setWhitelist(MULTIPLY_PROXY_ACTIONS_ADDRESS, true);
 
     return { guard, factory, dummy, proxyAction, cdpManager, mcdView };
   }
