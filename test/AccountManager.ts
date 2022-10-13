@@ -77,18 +77,17 @@ describe("Accounts Manager", function () {
       await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
     });
 
-    it("should allow proxy owner, to change proxy ownership",async function () {
-      throw "TODO:"
-    })
+    it("should allow proxy owner, to change proxy ownership", async function () {
+      throw "TODO:";
+    });
 
-    it("should deny allowed proxy non-owner, to change proxy ownership",async function () {
-      throw "TODO:"
-    })
+    it("should deny allowed proxy non-owner, to change proxy ownership", async function () {
+      throw "TODO:";
+    });
 
-    it("should revert if permit revoked from owner by other permited account",async function () {
-      throw "TODO:"
-    })
-
+    it("should revert if permit revoked from owner by other permited account", async function () {
+      throw "TODO:";
+    });
   });
 
   describe("factory", function () {

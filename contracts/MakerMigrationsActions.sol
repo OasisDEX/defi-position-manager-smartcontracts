@@ -21,7 +21,10 @@ contract MakerMigrationsActions is Constants {
     }
 
     modifier onlyDelegate() {
-        require(address(this) != self, "maker-migrations-actions/only-delegate");
+        require(
+            address(this) != self,
+            "maker-migrations-actions/only-delegate"
+        );
         _;
     }
 

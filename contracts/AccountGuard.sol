@@ -42,17 +42,15 @@ contract AccountGuard is Ownable {
             allowed[msg.sender][target] || msg.sender == factory,
             "account-guard/not-owner"
         );
-        if(msg.sender == factory && allowance){
+        if (msg.sender == factory && allowance) {
             owners[target] = caller;
-        }else{
+        } else {
             require(owners[target] != caller, "account-guard/cant-deny-owner");
         }
         allowed[caller][target] = allowance;
     }
 
-    function changeOwner(
-        address newOwner,
-        address target) external{
+    function changeOwner(address newOwner, address target) external {
         require(owners[target] == msg.sender, "account-guard/only-proxy-owner");
         owners[target] = newOwner;
     }
