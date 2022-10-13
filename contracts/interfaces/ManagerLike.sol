@@ -8,7 +8,7 @@ interface ManagerLike {
         address allowedAddr
     ) external view returns (uint256);
 
-    function cdpi() external view returns(uint256);
+    function cdpi() external view returns (uint256);
 
     function vat() external view returns (address);
 
@@ -49,8 +49,5 @@ interface ManagerLike {
         uint256
     ) external;
 
-    function give(
-        uint256,
-        address
-    ) external;
+    function give(uint256, address) external;
 }

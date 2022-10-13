@@ -20,14 +20,11 @@ contract AccountImplementation {
         guard = _guard;
     }
 
-    function send(address _target, bytes memory _data)
-        public
-        payable
-        auth{
-            require(_target != address(0x0));
-            require(guard.isWhitelisted(_target),"account-guard/illegal-target");
-            (bool status,) = (_target).call{ value:msg.value }(_data);
-            require(status, "account-guard/call-failed");
+    function send(address _target, bytes memory _data) public payable auth {
+        require(_target != address(0x0));
+        require(guard.isWhitelisted(_target), "account-guard/illegal-target");
+        (bool status, ) = (_target).call{value: msg.value}(_data);
+        require(status, "account-guard/call-failed");
     }
 
     function execute(address _target, bytes memory _data)
@@ -37,7 +34,7 @@ contract AccountImplementation {
         returns (bytes32 response)
     {
         require(_target != address(0x0));
-        require(guard.isWhitelisted(_target),"account-guard/illegal-target");
+        require(guard.isWhitelisted(_target), "account-guard/illegal-target");
 
         // call contract in current context
         assembly {

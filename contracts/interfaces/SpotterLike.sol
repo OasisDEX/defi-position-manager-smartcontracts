@@ -6,7 +6,10 @@ interface IPipInterface {
 }
 
 interface SpotterLike {
-    function ilks(bytes32) external view returns (IPipInterface pip, uint256 mat);
+    function ilks(bytes32)
+        external
+        view
+        returns (IPipInterface pip, uint256 mat);
 
     function par() external view returns (uint256);
 }

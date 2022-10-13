@@ -11,11 +11,11 @@ contract AccountGuard is Ownable {
     mapping(address => mapping(address => bool)) private allowed;
     mapping(address => bool) private whitelisted;
 
-    function isWhitelisted(address target) public view returns(bool){
+    function isWhitelisted(address target) public view returns (bool) {
         return whitelisted[target];
     }
 
-    function setWhitelist(address target, bool status) public onlyOwner{
+    function setWhitelist(address target, bool status) public onlyOwner {
         whitelisted[target] = status;
     }
 
@@ -27,8 +27,8 @@ contract AccountGuard is Ownable {
         return allowed[operator][proxy];
     }
 
-    function initializeFactory() public{
-        require(factory == address(0),"account-guard/factory-set");
+    function initializeFactory() public {
+        require(factory == address(0), "account-guard/factory-set");
         factory = msg.sender;
     }
 
@@ -37,7 +37,10 @@ contract AccountGuard is Ownable {
         address target,
         bool allowance
     ) external {
-        require(allowed[msg.sender][target] || msg.sender == factory, "account-guard/not-owner");
+        require(
+            allowed[msg.sender][target] || msg.sender == factory,
+            "account-guard/not-owner"
+        );
         allowed[caller][target] = allowance;
     }
 }

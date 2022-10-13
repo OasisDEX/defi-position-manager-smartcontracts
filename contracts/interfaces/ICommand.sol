@@ -12,7 +12,10 @@ interface ICommand {
         view
         returns (bool);
 
-    function isExecutionLegal(uint256 cdpId, bytes memory triggerData) external view returns (bool);
+    function isExecutionLegal(uint256 cdpId, bytes memory triggerData)
+        external
+        view
+        returns (bool);
 
     function execute(
         bytes calldata executionData,
