@@ -19,6 +19,8 @@ describe("Accounts Manager", function () {
 
     const Guard = await ethers.getContractFactory("AccountGuard");
     const guard = await(await Guard.deploy()).deployed();
+
+    await guard.setWhitelist(await dummy.address, true);
     
     const Account = await ethers.getContractFactory("AccountImplementation");
     const account = await Account.deploy(guard.address);
@@ -44,6 +46,34 @@ describe("Accounts Manager", function () {
     const receipt = await tx.wait();
   })
 
+  describe("guard", function(){
+    
+    it("Should have owner set to deployer", async function(){
+      const owner = await guard.owner();
+      expect(owner).to.be.equal(await  ethers.provider.getSigner(0).getAddress());
+    })
+
+    it("Should allow seting whitelist by owner", async function(){
+      const testAddress = await user1.getAddress();
+      const initialStatus = await guard.isWhitelisted(testAddress);
+      await guard.setWhitelist(testAddress, !initialStatus);
+      const statusAfterFirstChange = await guard.isWhitelisted(testAddress);
+      expect(statusAfterFirstChange).to.be.not.equal(initialStatus);
+      await guard.setWhitelist(testAddress, initialStatus);
+      const statusAfterSecondChange = await guard.isWhitelisted(testAddress);
+      expect(statusAfterSecondChange).to.be.equal(initialStatus);
+
+    })
+
+    it("Should deny seting whitelist by not owner", async function(){
+      const testAddress = await user1.getAddress();
+      const initialStatus = await guard.isWhitelisted(testAddress);
+      const tx = guard.connect(user1).setWhitelist(testAddress, !initialStatus, {gasLimit:2000000});
+      await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
+    })
+  })
+
+  
   describe("factory", function () {
 
 
@@ -63,7 +93,7 @@ describe("Accounts Manager", function () {
       const acountCountAfter = await factory.accountsCount(await user1.getAddress());
       const acountCountAfter2 = await factory.accountsCount(await user2.getAddress());
 
-      expect(acountCountBefore+1).to.equal(acountCountAfter);
+      expect(acountCountBefore.add(1)).to.equal(acountCountAfter);
       expect(acountCountBefore2).to.equal(acountCountAfter2);
     });
 
@@ -87,9 +117,21 @@ describe("Accounts Manager", function () {
       await account.connect(user1).execute(dummy.address, data);
     })
 
-    it("should emit Narf event", async function () {
+    it("should fail if calling not whitelisted address", async function () {
+      await (await factory.connect(user1)['createAccount()']()).wait();
+      const validAddress = await user1.getAddress();
+      const len = await factory.accountsCount(validAddress);
+      const accountRecord = await factory.accounts(validAddress,len.toNumber()-1);
+      const account = await ethers.getContractAt("AccountImplementation",accountRecord);
+      const data = dummy.interface.encodeFunctionData("call1");
+      let tx = account.connect(user1).execute(guard.address, data);
+      await expect(tx).to.be.revertedWith("account-guard/illegal-target");
+      tx = account.connect(user1).execute(await user2.getAddress(), data);
+      await expect(tx).to.be.revertedWith("account-guard/illegal-target");
+    })
+
+    it("should emit Narf event if executed", async function () {
       const receipt0 = await (await factory.connect(user1)['createAccount()']()).wait();
-      console.log("gas cost", receipt0.gasUsed.toString());
       const validAddress = await user1.getAddress();
       const len = await factory.accountsCount(validAddress);
       const accountRecord = await factory.accounts(validAddress,len.toNumber()-1);
@@ -103,6 +145,25 @@ describe("Accounts Manager", function () {
       const details = iface.decodeEventLog('Narf',receipt.events![0].data, receipt.events![0].topics);
       expect(details.sender).to.equal(validAddress);
       expect(details.thisAddress).to.equal(account.address);
+      expect(details.self).to.equal(dummy.address);
+
+    })
+    
+    it("should emit Narf event if called", async function () {
+      const receipt0 = await (await factory.connect(user1)['createAccount()']()).wait();
+      const validAddress = await user1.getAddress();
+      const len = await factory.accountsCount(validAddress);
+      const accountRecord = await factory.accounts(validAddress,len.toNumber()-1);
+      const account = await ethers.getContractAt("AccountImplementation",accountRecord);
+      const data = dummy.interface.encodeFunctionData("call1");
+      const receipt = await (await account.connect(user1).send(dummy.address, data)).wait();
+      const iface = new utils.Interface([
+        'event Narf(address sender, address thisAddress, address self)',
+      ])
+      expect(receipt.events?.length).to.equal(1);
+      const details = iface.decodeEventLog('Narf',receipt.events![0].data, receipt.events![0].topics);
+      expect(details.sender).to.equal(account.address);
+      expect(details.thisAddress).to.equal(dummy.address);
       expect(details.self).to.equal(dummy.address);
 
     })
