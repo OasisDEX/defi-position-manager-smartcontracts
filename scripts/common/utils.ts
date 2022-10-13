@@ -1,4 +1,5 @@
 import { ContractReceipt } from "@ethersproject/contracts";
+import { ethers } from "hardhat";
 import { BytesLike, utils, Contract } from "ethers";
 import { BigNumber } from "bignumber.js";
 import {
@@ -180,6 +181,19 @@ export function decodeBasicSellData(data: string) {
   };
 }
 
+export async function getETHPrice() : Promise<BigNumber>{
+  const poolAddress = "0xA478c2975Ab1Ea89e8196811F51A7B7Ade33eB11";
+  const proxyAction = await ethers.getContractAt(
+    "IUniswapV2Like",
+    poolAddress
+  );
+  const reserves = await proxyAction.getReserves();
+
+  const price = (new BigNumber(reserves.reserve0.toString())).dividedBy(new BigNumber(reserves.reserve1.toString()));
+  
+  return price;
+}
+
 export function forgeUnoswapCalldata(
   fromToken: string,
   fromAmount: string,
@@ -189,9 +203,11 @@ export function forgeUnoswapCalldata(
   const iface = new utils.Interface([
     "function unoswap(address srcToken, uint256 amount, uint256 minReturn, bytes32[] calldata pools) public payable returns(uint256 returnAmount)",
   ]);
+  
   const pool = `0x${
     toDai ? "8" : "0"
   }0000000000000003b6d0340a478c2975ab1ea89e8196811f51a7b7ade33eb11`;
+
   return iface.encodeFunctionData("unoswap", [
     fromToken,
     fromAmount,

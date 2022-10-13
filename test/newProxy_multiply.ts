@@ -14,11 +14,10 @@ import {
   ManagerLike,
   McdViewLike,
 } from "../typechain-types";
-import { Dummy } from "../typechain-types/contracts/test";
 import BigNumber from "bignumber.js";
 import { Signer } from "ethers";
 import { HardhatUtils } from "./../scripts/common/hardhat.utils";
-import { ensureBigNumber, forgeUnoswapCalldata } from "../scripts/common/utils";
+import { ensureBigNumber, forgeUnoswapCalldata, getETHPrice } from "../scripts/common/utils";
 import { ONE_INCH_V4_ROUTER } from "../scripts/common/addresses";
 
 const CDP_MANAGER = "0x5ef30b9986345249bc32d8928B7ee64DE9435E39";
@@ -28,9 +27,6 @@ const MULTIPLY_PROXY_ACTIONS_ADDRESS =
   "0x2a49eae5cca3f050ebec729cf90cc910fadaf7a2";
 const ETH_A_ILK =
   "0x4554482D41000000000000000000000000000000000000000000000000000000";
-const MCD_JUG = "0x19c0976f590D67707E62397C87829d896Dc0f1F1";
-const ETH_JOIN = "0x2F0b23f53734252Bda2277357e97e1517d6B042A";
-const DAI_JOIN = "0x9759A6Ac90977b93B58547b4A71c78317f391A28";
 const MCD_VIEW = "0x55Dc2Be8020bCa72E58e665dC931E03B749ea5E0";
 const hardhatUtils = new HardhatUtils(hre);
 const oasisFee = new BigNumber(0.002);
@@ -75,31 +71,24 @@ describe("Multiply - new Proxy", function () {
   let user1Proxy: AccountImplementation;
   let user2Proxy: AccountImplementation;
   let mcdView: McdViewLike;
+  let price: any;
 
-  function buildExchangeData(
+  function buildExchangeDataIncrease(
     requiredDebt: string,
     borrowCollateral: string,
-    minToTokenAmount: BigNumber,
     oasisFee: BigNumber
   ) {
-    console.log(
-      "ExchangeData",
-      requiredDebt,
-      borrowCollateral,
-      minToTokenAmount.toFixed(0),
-      oasisFee.toFixed(0)
-    );
     const exchangeData = {
       fromTokenAddress: hardhatUtils.addresses.DAI,
       toTokenAddress: hardhatUtils.addresses.WETH,
-      fromTokenAmount: requiredDebt,
+      fromTokenAmount: new BigNumber(requiredDebt).toFixed(0),
       toTokenAmount: borrowCollateral,
-      minToTokenAmount: minToTokenAmount.toFixed(0),
+      minToTokenAmount: borrowCollateral,
       exchangeAddress: ONE_INCH_V4_ROUTER,
       _exchangeCalldata: forgeUnoswapCalldata(
         hardhatUtils.addresses.DAI,
         new BigNumber(requiredDebt).minus(oasisFee).toFixed(0),
-        minToTokenAmount.toFixed(0),
+        borrowCollateral,
         false
       ),
     };
@@ -117,8 +106,8 @@ describe("Multiply - new Proxy", function () {
       fundsReceiver: receiverAddress,
       cdpId: cdpId,
       ilk: ETH_A_ILK,
-      requiredDebt: debtDelta.shiftedBy(18).abs().toFixed(0),
-      borrowCollateral: collateralDelta.shiftedBy(18).abs().toFixed(0),
+      requiredDebt: debtDelta.abs().toFixed(0),
+      borrowCollateral: collateralDelta.abs().toFixed(0),
       withdrawCollateral: 0,
       withdrawDai: 0,
       depositDai: 0,
@@ -140,10 +129,12 @@ describe("Multiply - new Proxy", function () {
     const oraclePrice = ensureBigNumber(
       await mcdView.getNextPrice(ETH_A_ILK)
     ).shiftedBy(-18);
+    const ethPrice = (await getETHPrice()).multipliedBy(1.01); //account for slippage
+
     const { collateralDelta, debtDelta, oazoFee, skipFL } = getMultiplyParams(
       {
         oraclePrice: oraclePrice,
-        marketPrice: oraclePrice,
+        marketPrice: ethPrice,
         OF: oasisFee,
         FF: new BigNumber(0),
         slippage: new BigNumber(0),
@@ -159,8 +150,7 @@ describe("Multiply - new Proxy", function () {
         providedDai: new BigNumber(0),
         withdrawDai: new BigNumber(0),
         withdrawColl: new BigNumber(0),
-      },
-      true
+      }
     );
     return { collateralDelta, debtDelta, oazoFee, skipFL, oraclePrice };
   }
@@ -171,16 +161,18 @@ describe("Multiply - new Proxy", function () {
     args: any,
     overrides: any = undefined
   ) {
-    console.log("overrides", overrides);
     const data = proxyAction.interface.encodeFunctionData(methodName, args);
-    overrides
+    return overrides
       ? await proxy.execute(MULTIPLY_PROXY_ACTIONS_ADDRESS, data, overrides)
       : await proxy.execute(MULTIPLY_PROXY_ACTIONS_ADDRESS, data);
   }
 
   this.beforeAll(async function () {
+    
     user1 = ethers.provider.getSigner(2);
     user2 = ethers.provider.getSigner(3);
+
+    price = ethers.utils.parseEther("20");
 
     admin = await hardhatUtils.impersonate(
       "0x12348c699adc022be55602ef389de5d8a3b25e3d"
@@ -205,7 +197,7 @@ describe("Multiply - new Proxy", function () {
   });
 
   describe("create New vault", function () {
-    it.only("Open 200% coll ratio vault", async function () {
+    it("Open 200% coll ratio vault", async function () {
       const lastCrpIdBefore = await cdpManager.cdpi();
 
       const reciverAddress = await user1.getAddress();
@@ -214,46 +206,50 @@ describe("Multiply - new Proxy", function () {
         await computeDeltas(
           new BigNumber(0),
           new BigNumber(0),
-          ensureBigNumber(ethers.utils.parseEther("10")),
+          ensureBigNumber(price),
           new BigNumber(1.99),
           new BigNumber(2)
         );
 
-      console.log("Step1");
-
-      const exchangeData = buildExchangeData(
+      const exchangeData = buildExchangeDataIncrease(
         debtDelta.toFixed(0),
         collateralDelta.toFixed(0),
-        collateralDelta.minus(oazoFee.dividedBy(ensureBigNumber(oraclePrice))),
         oazoFee
       );
-
-      console.log("Step2");
 
       const cdpData = buildCdpData(
         reciverAddress,
         0,
-        collateralDelta,
-        debtDelta
+        debtDelta,
+        collateralDelta
       );
 
-      console.log("Step4");
-
-      await executeProxy(
+      const tx = await executeProxy(
         user1Proxy.connect(user1),
         "openMultiplyVault",
         [exchangeData, cdpData, hardhatUtils.mpaServiceRegistry()],
         {
-          value: ethers.utils.parseEther("10"),
+          value: price,
           gasLimit: "5000000",
         }
       );
 
-      const lastCrpIdAfter = await cdpManager.cdpi();
-      expect(lastCrpIdBefore).to.be.equal(lastCrpIdAfter.toNumber() - 1);
+      const receipt = await tx.wait();
+      const abi = [
+        'event MultipleActionCalled(string methodName, uint indexed cdpId, uint swapMinAmount, uint swapOptimistAmount, uint collateralLeft, uint daiLeft)',
+      ]
+      const iface = new ethers.utils.Interface(abi)
+      const events = receipt?.events?.filter((x: any) => {
+        return x.topics[0] === iface.getEventTopic('MultipleActionCalled')
+      })
 
-      const address = await cdpManager.owns(lastCrpIdAfter);
-      expect(address).to.be.equal(await user1.getAddress());
+      const logs = events!.map(x=>iface.parseLog(x) as any);
+      const ratio = ensureBigNumber(await mcdView.getRatio(logs[0].args.cdpId.toString(), false)).shiftedBy(-18);
+
+      expect(ratio.toNumber()).to.be.greaterThan(1.9) 
+      expect(ratio.toNumber()).to.be.lessThan(2.1) 
+
+
     });
   });
 });

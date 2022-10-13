@@ -9,6 +9,8 @@ interface McdViewLike {
 
     function approve(address _allowedReader, bool isApproved) external;
 
+    function getRatio(uint256 vaultId, bool useNextPrice) external view returns (uint256);
+
     function getPrice(bytes32 ilk) external view returns (uint256);
 
     function getNextPrice(bytes32 ilk) external view returns (uint256);

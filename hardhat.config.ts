@@ -3,8 +3,6 @@ import "@nomicfoundation/hardhat-toolbox";
 import * as dotenv from 'dotenv'
 dotenv.config()
 
-const blockNumber = 15687400
-
 const config: HardhatUserConfig = {
   solidity: "0.8.17",
   networks:{
@@ -16,7 +14,6 @@ const config: HardhatUserConfig = {
     hardhat: {
       forking: {
           url: process.env.ALCHEMY_NODE!,
-          blockNumber: parseInt(blockNumber.toString()),
       },
       chainId: 2137,
       mining: {
