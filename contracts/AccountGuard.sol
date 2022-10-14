@@ -53,5 +53,6 @@ contract AccountGuard is Ownable {
     function changeOwner(address newOwner, address target) external {
         require(owners[target] == msg.sender, "account-guard/only-proxy-owner");
         owners[target] = newOwner;
+        allowed[msg.sender][target] = false;
     }
 }
