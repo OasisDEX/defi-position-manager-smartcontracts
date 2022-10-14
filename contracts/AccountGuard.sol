@@ -10,7 +10,7 @@ contract AccountGuard is Ownable {
     address factory = address(0);
     mapping(address => mapping(address => bool)) private allowed;
     mapping(address => bool) private whitelisted;
-    mapping(address => address) private owners;
+    mapping(address => address) public owners;
 
     function isWhitelisted(address target) public view returns (bool) {
         return whitelisted[target];

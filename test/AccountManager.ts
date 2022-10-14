@@ -5,6 +5,7 @@ import { AccountGuard } from "../typechain-types/contracts/AccountGuard";
 import { AccountFactory } from "../typechain-types";
 import { Dummy } from "../typechain-types/contracts/test";
 import { Signer, utils } from "ethers";
+import hre from 'hardhat';
 
 const AUTOMATION_SERVICE_REGISTRY =
   "0x9b4Ae7b164d195df9C4Da5d08Be88b2848b2EaDA";
@@ -76,17 +77,46 @@ describe("Accounts Manager", function () {
         .setWhitelist(testAddress, !initialStatus, { gasLimit: 2000000 });
       await expect(tx).to.be.revertedWith("Ownable: caller is not the owner");
     });
+    describe("Account access", function () {
+      let acc1 : string;
+      let user1Address : string;
+      let user2Address : string;
+      let snapshotId : any;
 
-    it("should allow proxy owner, to change proxy ownership", async function () {
-      throw "TODO:";
-    });
+      this.beforeAll(async function () {  
+        user1Address = await user1.getAddress();
+        user2Address = await user2.getAddress();
+        await factory.connect(user1)["createAccount()"]();
+        acc1 = await factory.positionsToAccounts(await factory.accountsGlobalCounter());
+        await guard.connect(user1).permit(user2Address, acc1, true);
+      });
+      
+      beforeEach(async () => {
+        snapshotId = await hre.ethers.provider.send('evm_snapshot', [])
+      })
 
-    it("should deny allowed proxy non-owner, to change proxy ownership", async function () {
-      throw "TODO:";
-    });
+      afterEach(async () => {
+          await hre.ethers.provider.send('evm_revert', [snapshotId])
+      })
 
-    it("should revert if permit revoked from owner by other permited account", async function () {
-      throw "TODO:";
+      it("should allow proxy owner, to change proxy ownership", async function () {
+        await guard.connect(user1).changeOwner(user2Address, acc1);
+        expect(await guard.owners(acc1)).to.be.equal(user2Address);
+
+      });
+
+      it("should deny allowed proxy non-owner, to change proxy ownership", async function () {
+        let tx = guard.connect(user2).changeOwner(user2Address, acc1);
+        await expect(tx).to.be.revertedWith("account-guard/only-proxy-owner");
+        expect(await guard.owners(acc1)).to.be.equal(user1Address);
+      });
+
+      it("should revert if permit revoked from owner by other permited account", async function () {
+        let tx = guard.connect(user2).permit(user1Address, acc1, false);
+        expect(tx).to.be.revertedWith("account-guard/cant-deny-owner");
+        expect(await guard.owners(acc1)).to.be.equal(user1Address);
+        expect(await guard.canCall(acc1, user1Address)).to.be.equal(true);
+      });
     });
   });
 
