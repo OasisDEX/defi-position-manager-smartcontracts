@@ -20,7 +20,6 @@ contract AccountFactory is Constants {
     mapping(address => address) public migrated;
 
     address public immutable proxyTemplate;
-    address public immutable self;
     AccountGuard public guard;
     uint64 public accountsGlobalCounter;
 
@@ -33,7 +32,6 @@ contract AccountFactory is Constants {
         accountsGlobalCounter = 0;
         guard = AccountGuard(_guard);
         serviceRegistry = _serviceRegistry;
-        self = address(this);
         guard.initializeFactory();
     }
 
