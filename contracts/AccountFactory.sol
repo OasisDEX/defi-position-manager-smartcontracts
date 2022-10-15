@@ -15,8 +15,6 @@ import "hardhat/console.sol";
 contract AccountFactory is Constants {
     IServiceRegistry public immutable serviceRegistry;
 
-    mapping(address => address) public migrated;
-
     address public immutable proxyTemplate;
     AccountGuard public guard;
     uint64 public accountsGlobalCounter;
