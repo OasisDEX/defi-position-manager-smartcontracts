@@ -15,8 +15,6 @@ import "hardhat/console.sol";
 contract AccountFactory is Constants {
     IServiceRegistry public immutable serviceRegistry;
 
-    mapping(address => address[]) public accounts; //owner => proxy address
-    mapping(uint256 => address) public positionsToAccounts;
     mapping(address => address) public migrated;
 
     address public immutable proxyTemplate;
@@ -43,15 +41,9 @@ contract AccountFactory is Constants {
     function createAccount(address user) public returns (address) {
         accountsGlobalCounter++;
         address clone = Clones.clone(proxyTemplate);
-        positionsToAccounts[accountsGlobalCounter] = clone;
-        accounts[user].push(clone);
         guard.permit(user, clone, true);
         emit AccountCreated(clone, user, accountsGlobalCounter);
         return clone;
-    }
-
-    function accountsCount(address user) public view returns (uint256) {
-        return accounts[user].length;
     }
 
     event AccountCreated(address proxy, address user, uint64 vaultId);

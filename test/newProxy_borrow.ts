@@ -83,15 +83,14 @@ describe("Borrow - new Proxy", function () {
     user2 = ethers.provider.getSigner(3);
     ({ guard, factory, dummy, proxyAction, cdpManager, mcdView } =
       await loadFixture(deployFreshFactory));
-    await factory.connect(user1)["createAccount()"]();
+    const recipt1 = await (await factory.connect(user1)["createAccount()"]()).wait();
+    const recipt2 = await (await factory.connect(user2)["createAccount()"]()).wait();
+    const firstAccountAddress = recipt1.events![0].args!.proxy;
+    const secondAccountAddress = recipt2.events![0].args!.proxy;
     await factory.connect(user2)["createAccount()"]();
     const Account = await ethers.getContractFactory("AccountImplementation");
-    user1Proxy = Account.attach(
-      await factory.accounts(await user1.getAddress(), 0)
-    );
-    user2Proxy = Account.attach(
-      await factory.accounts(await user2.getAddress(), 0)
-    );
+    user1Proxy = Account.attach(firstAccountAddress);
+    user2Proxy = Account.attach(secondAccountAddress);
   });
 
   describe("create New vault", function () {
@@ -105,7 +104,7 @@ describe("Borrow - new Proxy", function () {
       ]);
 
       const lastCrpIdAfter = await cdpManager.cdpi();
-      expect(lastCrpIdBefore).to.be.equal(lastCrpIdAfter - 1);
+      expect(lastCrpIdBefore).to.be.equal(lastCrpIdAfter.sub(1));
 
       const address = await cdpManager.owns(lastCrpIdAfter);
       expect(address).to.be.equal(await user1.getAddress());
