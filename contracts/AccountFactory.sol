@@ -46,5 +46,5 @@ contract AccountFactory is Constants {
         return clone;
     }
 
-    event AccountCreated(address proxy, address user, uint64 vaultId);
+    event AccountCreated(address proxy, address indexed user, uint64 indexed vaultId);
 }
