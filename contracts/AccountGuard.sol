@@ -57,5 +57,5 @@ contract AccountGuard is Ownable {
         emit OwnershipTransfered(newOwner, msg.sender, target);
     }
 
-    event OwnershipTransfered(address newOwner,address oldAddress, address proxy);
+    event OwnershipTransfered(address newOwner,address indexed oldAddress, address indexed proxy);
 }
