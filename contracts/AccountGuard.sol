@@ -25,7 +25,7 @@ contract AccountGuard is Ownable {
         view
         returns (bool)
     {
-        return allowed[operator][proxy];
+        return owners[proxy] == operator || allowed[operator][proxy];
     }
 
     function initializeFactory() public {

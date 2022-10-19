@@ -158,7 +158,7 @@ describe("Accounts Manager", function () {
       ).wait();
       expect(receipt.events?.length).to.equal(1);
       expect(receipt.events![0].eventSignature).to.equal(
-        "AccountCreated(address,address,uint64)"
+        "AccountCreated(address,address,uint256)"
       );
       expect(receipt.events![0].args!.user).to.equal(await user1.getAddress());
     });

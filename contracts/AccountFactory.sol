@@ -17,7 +17,9 @@ contract AccountFactory is Constants {
 
     address public immutable proxyTemplate;
     AccountGuard public guard;
-    uint64 public accountsGlobalCounter;
+    uint256 public accountsGlobalCounter;
+
+    mapping(uint256 => address) public accounts;
 
     constructor(
         address _implementation,
@@ -41,8 +43,10 @@ contract AccountFactory is Constants {
         address clone = Clones.clone(proxyTemplate);
         guard.permit(user, clone, true);
         emit AccountCreated(clone, user, accountsGlobalCounter);
+        //TODO: decide if we want this information onchain
+        accounts[accountsGlobalCounter] = clone;
         return clone;
     }
 
-    event AccountCreated(address proxy, address indexed user, uint64 indexed vaultId);
+    event AccountCreated(address proxy, address indexed user, uint256 indexed vaultId);
 }
