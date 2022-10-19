@@ -48,6 +48,12 @@ contract AccountGuard is Ownable {
             require(owners[target] != caller, "account-guard/cant-deny-owner");
         }
         allowed[caller][target] = allowance;
+        
+        if(allowance){
+            emit PermissionGranted(caller, target);
+        } else {
+            emit PermissionRevoked(caller, target);
+        }
     }
 
     function changeOwner(address newOwner, address target) external {
@@ -58,4 +64,6 @@ contract AccountGuard is Ownable {
     }
 
     event OwnershipTransfered(address newOwner,address indexed oldAddress, address indexed proxy);
+    event PermissionGranted(address indexed caller, address indexed proxy);
+    event PermissionRevoked(address indexed caller, address indexed proxy);
 }

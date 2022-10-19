@@ -7,9 +7,6 @@ import { Dummy } from "../typechain-types/contracts/test";
 import { Signer, utils } from "ethers";
 import hre from 'hardhat';
 
-const AUTOMATION_SERVICE_REGISTRY =
-  "0x9b4Ae7b164d195df9C4Da5d08Be88b2848b2EaDA";
-
 describe("Accounts Manager", function () {
   // We define a fixture to reuse the same setup in every test.
   // We use loadFixture to run this setup once, snapshot that state,
@@ -29,8 +26,7 @@ describe("Accounts Manager", function () {
     const AccountFactory = await ethers.getContractFactory("AccountFactory");
     const factory = await AccountFactory.deploy(
       account.address,
-      guard.address,
-      AUTOMATION_SERVICE_REGISTRY
+      guard.address
     );
 
     return { guard, factory, dummy };
@@ -87,8 +83,8 @@ describe("Accounts Manager", function () {
         user1Address = await user1.getAddress();
         user2Address = await user2.getAddress();
         const receipt = await (await factory.connect(user1)["createAccount()"]()).wait();
-        await guard.connect(user1).permit(user2Address, receipt.events![0].args!.proxy, true);
-        acc1 = receipt.events![0].args!.proxy;
+        await guard.connect(user1).permit(user2Address, receipt.events![1].args!.proxy, true);
+        acc1 = receipt.events![1].args!.proxy;
       });
       
       beforeEach(async () => {
@@ -156,21 +152,20 @@ describe("Accounts Manager", function () {
       const receipt = await (
         await factory.connect(user1)["createAccount()"]()
       ).wait();
-      expect(receipt.events?.length).to.equal(1);
-      expect(receipt.events![0].eventSignature).to.equal(
+      expect(receipt.events?.length).to.equal(2);
+      expect(receipt.events![1].eventSignature).to.equal(
         "AccountCreated(address,address,uint256)"
       );
-      expect(receipt.events![0].args!.user).to.equal(await user1.getAddress());
+      expect(receipt.events![1].args!.user).to.equal(await user1.getAddress());
     });
   });
 
   describe("Account", async function () {
     it("should be able to call Dummy logic", async function () {
       const receipt = await (await factory.connect(user1)["createAccount()"]()).wait();
-      
       const account = await ethers.getContractAt(
         "AccountImplementation",
-        receipt.events![0].args!.proxy
+        receipt.events![1].args!.proxy
       );
       const data = dummy.interface.encodeFunctionData("call1");
       await account.connect(user1).execute(dummy.address, data);
@@ -181,7 +176,7 @@ describe("Accounts Manager", function () {
       
       const account = await ethers.getContractAt(
         "AccountImplementation",
-        receipt.events![0].args!.proxy
+        receipt.events![1].args!.proxy
       );
 
       const data = dummy.interface.encodeFunctionData("call1");
@@ -199,7 +194,7 @@ describe("Accounts Manager", function () {
       
       const account = await ethers.getContractAt(
         "AccountImplementation",
-        receipt0.events![0].args!.proxy
+        receipt0.events![1].args!.proxy
       );
 
       const data = dummy.interface.encodeFunctionData("call1");
@@ -227,7 +222,7 @@ describe("Accounts Manager", function () {
 
       const account = await ethers.getContractAt(
         "AccountImplementation",
-        receipt0.events![0].args!.proxy
+        receipt0.events![1].args!.proxy
       );
 
       const data = dummy.interface.encodeFunctionData("call1");
@@ -254,7 +249,7 @@ describe("Accounts Manager", function () {
       
       const account = await ethers.getContractAt(
         "AccountImplementation",
-        receipt.events![0].args!.proxy
+        receipt.events![1].args!.proxy
       );
 
       const data = dummy.interface.encodeFunctionData("call1");

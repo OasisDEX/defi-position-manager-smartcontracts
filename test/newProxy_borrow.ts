@@ -13,8 +13,6 @@ import { Signer } from "ethers";
 import { McdViewLike } from "../typechain-types/contracts/interfaces/McdViewLike";
 
 const CDP_MANAGER = "0x5ef30b9986345249bc32d8928B7ee64DE9435E39";
-const AUTOMATION_SERVICE_REGISTRY =
-  "0x9b4Ae7b164d195df9C4Da5d08Be88b2848b2EaDA";
 const PROXY_ACTIONS_ADDRESS = "0x82ecD135Dce65Fbc6DbdD0e4237E0AF93FFD5038";
 const ETH_A_ILK =
   "0x4554482D41000000000000000000000000000000000000000000000000000000";
@@ -40,8 +38,7 @@ describe("Borrow - new Proxy", function () {
     const AccountFactory = await ethers.getContractFactory("AccountFactory");
     const factory = await AccountFactory.deploy(
       account.address,
-      guard.address,
-      AUTOMATION_SERVICE_REGISTRY
+      guard.address
     );
 
     const proxyAction = await ethers.getContractAt(
@@ -85,8 +82,8 @@ describe("Borrow - new Proxy", function () {
       await loadFixture(deployFreshFactory));
     const recipt1 = await (await factory.connect(user1)["createAccount()"]()).wait();
     const recipt2 = await (await factory.connect(user2)["createAccount()"]()).wait();
-    const firstAccountAddress = recipt1.events![0].args!.proxy;
-    const secondAccountAddress = recipt2.events![0].args!.proxy;
+    const firstAccountAddress = recipt1.events![1].args!.proxy;
+    const secondAccountAddress = recipt2.events![1].args!.proxy;
     await factory.connect(user2)["createAccount()"]();
     const Account = await ethers.getContractFactory("AccountImplementation");
     user1Proxy = Account.attach(firstAccountAddress);
