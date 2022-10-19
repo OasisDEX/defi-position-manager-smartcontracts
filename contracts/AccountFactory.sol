@@ -22,7 +22,6 @@ contract AccountFactory is Constants {
     //mapping(uint256 => address) public accounts;
 
     constructor(
-        address _implementation,
         address _guard
     ) {
         guard = AccountGuard(_guard);

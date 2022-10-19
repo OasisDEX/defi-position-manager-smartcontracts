@@ -22,7 +22,6 @@ async function main() {
 
   const AccountFactory = await ethers.getContractFactory("AccountFactory");
   const accountFactoryInstance = await AccountFactory.deploy(
-    implementationInstance.address,
     guardInstance.address
   );
 

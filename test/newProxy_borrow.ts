@@ -32,12 +32,8 @@ describe("Borrow - new Proxy", function () {
     const Guard = await ethers.getContractFactory("AccountGuard");
     const guard = await (await Guard.deploy()).deployed();
 
-    const Account = await ethers.getContractFactory("AccountImplementation");
-    const account = await Account.deploy(guard.address);
-
     const AccountFactory = await ethers.getContractFactory("AccountFactory");
     const factory = await AccountFactory.deploy(
-      account.address,
       guard.address
     );
 

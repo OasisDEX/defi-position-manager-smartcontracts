@@ -20,12 +20,8 @@ describe("Accounts Manager", function () {
 
     await guard.setWhitelist(await dummy.address, true);
 
-    const Account = await ethers.getContractFactory("AccountImplementation");
-    const account = await Account.deploy(guard.address);
-
     const AccountFactory = await ethers.getContractFactory("AccountFactory");
     const factory = await AccountFactory.deploy(
-      account.address,
       guard.address
     );
 
