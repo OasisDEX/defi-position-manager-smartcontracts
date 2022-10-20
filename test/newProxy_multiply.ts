@@ -42,14 +42,9 @@ describe("Multiply - new Proxy", function () {
     const Guard = await ethers.getContractFactory("AccountGuard");
     const guard = await (await Guard.deploy()).deployed();
 
-    const Account = await ethers.getContractFactory("AccountImplementation");
-    const account = await Account.deploy(guard.address);
-
     const AccountFactory = await ethers.getContractFactory("AccountFactory");
     const factory = await AccountFactory.deploy(
-      account.address,
-      guard.address,
-      AUTOMATION_SERVICE_REGISTRY
+      guard.address
     );
 
     const proxyAction = await ethers.getContractAt(
@@ -185,15 +180,11 @@ describe("Multiply - new Proxy", function () {
     await mcdView
       .connect(admin)
       .approve(await ethers.provider.getSigner(0).getAddress(), true);
-    await factory.connect(user1)["createAccount()"]();
-    await factory.connect(user2)["createAccount()"]();
+    const receipt1 = await (await factory.connect(user1)["createAccount()"]()).wait();
+    const receipt2 = await (await factory.connect(user2)["createAccount()"]()).wait();
     const Account = await ethers.getContractFactory("AccountImplementation");
-    user1Proxy = Account.attach(
-      await factory.accounts(await user1.getAddress(), 0)
-    );
-    user2Proxy = Account.attach(
-      await factory.accounts(await user2.getAddress(), 0)
-    );
+    user1Proxy = Account.attach(receipt1.events![1].args!.proxy);
+    user2Proxy = Account.attach(receipt2.events![1].args!.proxy);
   });
 
   describe("create New vault", function () {

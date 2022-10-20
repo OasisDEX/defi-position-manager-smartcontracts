@@ -13,8 +13,6 @@ import { Signer } from "ethers";
 import { McdViewLike } from "../typechain-types/contracts/interfaces/McdViewLike";
 
 const CDP_MANAGER = "0x5ef30b9986345249bc32d8928B7ee64DE9435E39";
-const AUTOMATION_SERVICE_REGISTRY =
-  "0x9b4Ae7b164d195df9C4Da5d08Be88b2848b2EaDA";
 const PROXY_ACTIONS_ADDRESS = "0x82ecD135Dce65Fbc6DbdD0e4237E0AF93FFD5038";
 const ETH_A_ILK =
   "0x4554482D41000000000000000000000000000000000000000000000000000000";
@@ -34,14 +32,9 @@ describe("Borrow - new Proxy", function () {
     const Guard = await ethers.getContractFactory("AccountGuard");
     const guard = await (await Guard.deploy()).deployed();
 
-    const Account = await ethers.getContractFactory("AccountImplementation");
-    const account = await Account.deploy(guard.address);
-
     const AccountFactory = await ethers.getContractFactory("AccountFactory");
     const factory = await AccountFactory.deploy(
-      account.address,
-      guard.address,
-      AUTOMATION_SERVICE_REGISTRY
+      guard.address
     );
 
     const proxyAction = await ethers.getContractAt(
@@ -83,15 +76,14 @@ describe("Borrow - new Proxy", function () {
     user2 = ethers.provider.getSigner(3);
     ({ guard, factory, dummy, proxyAction, cdpManager, mcdView } =
       await loadFixture(deployFreshFactory));
-    await factory.connect(user1)["createAccount()"]();
+    const recipt1 = await (await factory.connect(user1)["createAccount()"]()).wait();
+    const recipt2 = await (await factory.connect(user2)["createAccount()"]()).wait();
+    const firstAccountAddress = recipt1.events![1].args!.proxy;
+    const secondAccountAddress = recipt2.events![1].args!.proxy;
     await factory.connect(user2)["createAccount()"]();
     const Account = await ethers.getContractFactory("AccountImplementation");
-    user1Proxy = Account.attach(
-      await factory.accounts(await user1.getAddress(), 0)
-    );
-    user2Proxy = Account.attach(
-      await factory.accounts(await user2.getAddress(), 0)
-    );
+    user1Proxy = Account.attach(firstAccountAddress);
+    user2Proxy = Account.attach(secondAccountAddress);
   });
 
   describe("create New vault", function () {
@@ -105,7 +97,7 @@ describe("Borrow - new Proxy", function () {
       ]);
 
       const lastCrpIdAfter = await cdpManager.cdpi();
-      expect(lastCrpIdBefore).to.be.equal(lastCrpIdAfter - 1);
+      expect(lastCrpIdBefore).to.be.equal(lastCrpIdAfter.sub(1));
 
       const address = await cdpManager.owns(lastCrpIdAfter);
       expect(address).to.be.equal(await user1.getAddress());

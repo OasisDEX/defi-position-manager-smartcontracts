@@ -7,9 +7,6 @@ import { Dummy } from "../typechain-types/contracts/test";
 import { Signer, utils } from "ethers";
 import hre from 'hardhat';
 
-const AUTOMATION_SERVICE_REGISTRY =
-  "0x9b4Ae7b164d195df9C4Da5d08Be88b2848b2EaDA";
-
 describe("Accounts Manager", function () {
   // We define a fixture to reuse the same setup in every test.
   // We use loadFixture to run this setup once, snapshot that state,
@@ -23,14 +20,9 @@ describe("Accounts Manager", function () {
 
     await guard.setWhitelist(await dummy.address, true);
 
-    const Account = await ethers.getContractFactory("AccountImplementation");
-    const account = await Account.deploy(guard.address);
-
     const AccountFactory = await ethers.getContractFactory("AccountFactory");
     const factory = await AccountFactory.deploy(
-      account.address,
-      guard.address,
-      AUTOMATION_SERVICE_REGISTRY
+      guard.address
     );
 
     return { guard, factory, dummy };
@@ -86,9 +78,9 @@ describe("Accounts Manager", function () {
       this.beforeAll(async function () {  
         user1Address = await user1.getAddress();
         user2Address = await user2.getAddress();
-        await factory.connect(user1)["createAccount()"]();
-        acc1 = await factory.positionsToAccounts(await factory.accountsGlobalCounter());
-        await guard.connect(user1).permit(user2Address, acc1, true);
+        const receipt = await (await factory.connect(user1)["createAccount()"]()).wait();
+        await guard.connect(user1).permit(user2Address, receipt.events![1].args!.proxy, true);
+        acc1 = receipt.events![1].args!.proxy;
       });
       
       beforeEach(async () => {
@@ -128,74 +120,61 @@ describe("Accounts Manager", function () {
     });
 
     it("should be assigned to right owner", async function () {
-      const acountCountBefore = await factory.accountsCount(
-        await user1.getAddress()
-      );
-      const acountCountBefore2 = await factory.accountsCount(
-        await user2.getAddress()
-      );
 
       const receipt = await (
         await factory.connect(user1)["createAccount()"]()
       ).wait();
-      console.log(
-        "Gas used",
-        receipt.cumulativeGasUsed.toNumber(),
-        acountCountBefore.toNumber()
-      );
 
-      const acountCountAfter = await factory.accountsCount(
-        await user1.getAddress()
-      );
-      const acountCountAfter2 = await factory.accountsCount(
-        await user2.getAddress()
-      );
-
-      expect(acountCountBefore.add(1)).to.equal(acountCountAfter);
-      expect(acountCountBefore2).to.equal(acountCountAfter2);
+      let acc1Counter = 0;
+      let acc2Counter = 0;
+      const addr1 =  await user1.getAddress();
+      const addr2 =  await user2.getAddress();
+      
+      receipt.events?.forEach((event) => {
+        if (event.event === "AccountCreated") {
+          if (event.args?.user.toLowerCase() === addr1.toLowerCase()) {
+            acc1Counter++;
+          }
+          if (event.args?.user.toLowerCase() === addr2.toLowerCase()) {
+            acc2Counter++;
+          }
+        }
+      });
+      expect(acc1Counter).to.equal(1);
+      expect(acc2Counter).to.equal(0);
     });
 
     it("should emit AccountCreated event", async function () {
       const receipt = await (
         await factory.connect(user1)["createAccount()"]()
       ).wait();
-      expect(receipt.events?.length).to.equal(1);
-      expect(receipt.events![0].eventSignature).to.equal(
-        "AccountCreated(address,address,uint64)"
+      expect(receipt.events?.length).to.equal(2);
+      expect(receipt.events![1].eventSignature).to.equal(
+        "AccountCreated(address,address,uint256)"
       );
-      expect(receipt.events![0].args!.user).to.equal(await user1.getAddress());
+      expect(receipt.events![1].args!.user).to.equal(await user1.getAddress());
     });
   });
 
   describe("Account", async function () {
     it("should be able to call Dummy logic", async function () {
-      await (await factory.connect(user1)["createAccount()"]()).wait();
-      const validAddress = await user1.getAddress();
-      const len = await factory.accountsCount(validAddress);
-      const accountRecord = await factory.accounts(
-        validAddress,
-        len.toNumber() - 1
-      );
+      const receipt = await (await factory.connect(user1)["createAccount()"]()).wait();
       const account = await ethers.getContractAt(
         "AccountImplementation",
-        accountRecord
+        receipt.events![1].args!.proxy
       );
       const data = dummy.interface.encodeFunctionData("call1");
       await account.connect(user1).execute(dummy.address, data);
     });
 
     it("should fail if calling not whitelisted address", async function () {
-      await (await factory.connect(user1)["createAccount()"]()).wait();
-      const validAddress = await user1.getAddress();
-      const len = await factory.accountsCount(validAddress);
-      const accountRecord = await factory.accounts(
-        validAddress,
-        len.toNumber() - 1
-      );
+      const receipt = await (await factory.connect(user1)["createAccount()"]()).wait();
+      
       const account = await ethers.getContractAt(
         "AccountImplementation",
-        accountRecord
+        receipt.events![1].args!.proxy
       );
+
       const data = dummy.interface.encodeFunctionData("call1");
       let tx = account.connect(user1).execute(guard.address, data);
       await expect(tx).to.be.revertedWith("account-guard/illegal-target");
@@ -204,19 +183,16 @@ describe("Accounts Manager", function () {
     });
 
     it("should emit Narf event if executed", async function () {
+      const validAddress = await user1.getAddress();
       const receipt0 = await (
         await factory.connect(user1)["createAccount()"]()
       ).wait();
-      const validAddress = await user1.getAddress();
-      const len = await factory.accountsCount(validAddress);
-      const accountRecord = await factory.accounts(
-        validAddress,
-        len.toNumber() - 1
-      );
+      
       const account = await ethers.getContractAt(
         "AccountImplementation",
-        accountRecord
+        receipt0.events![1].args!.proxy
       );
+
       const data = dummy.interface.encodeFunctionData("call1");
       const receipt = await (
         await account.connect(user1).execute(dummy.address, data)
@@ -239,16 +215,12 @@ describe("Accounts Manager", function () {
       const receipt0 = await (
         await factory.connect(user1)["createAccount()"]()
       ).wait();
-      const validAddress = await user1.getAddress();
-      const len = await factory.accountsCount(validAddress);
-      const accountRecord = await factory.accounts(
-        validAddress,
-        len.toNumber() - 1
-      );
+
       const account = await ethers.getContractAt(
         "AccountImplementation",
-        accountRecord
+        receipt0.events![1].args!.proxy
       );
+
       const data = dummy.interface.encodeFunctionData("call1");
       const receipt = await (
         await account.connect(user1).send(dummy.address, data)
@@ -268,17 +240,14 @@ describe("Accounts Manager", function () {
     });
 
     it("should revert if called by not owner", async function () {
-      await (await factory.connect(user1)["createAccount()"]()).wait();
+      const receipt = await (await factory.connect(user1)["createAccount()"]()).wait();
       const validAddress = await user1.getAddress();
-      const len = await factory.accountsCount(validAddress);
-      const accountRecord = await factory.accounts(
-        validAddress,
-        len.toNumber() - 1
-      );
+      
       const account = await ethers.getContractAt(
         "AccountImplementation",
-        accountRecord
+        receipt.events![1].args!.proxy
       );
+
       const data = dummy.interface.encodeFunctionData("call1");
       const tx = account.connect(user2).execute(dummy.address, data);
       expect(tx).to.be.revertedWith("account-guard/not-owner");

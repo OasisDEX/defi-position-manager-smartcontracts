@@ -25,7 +25,7 @@ contract AccountGuard is Ownable {
         view
         returns (bool)
     {
-        return allowed[operator][proxy];
+        return owners[proxy] == operator || allowed[operator][proxy];
     }
 
     function initializeFactory() public {
@@ -48,11 +48,22 @@ contract AccountGuard is Ownable {
             require(owners[target] != caller, "account-guard/cant-deny-owner");
         }
         allowed[caller][target] = allowance;
+        
+        if(allowance){
+            emit PermissionGranted(caller, target);
+        } else {
+            emit PermissionRevoked(caller, target);
+        }
     }
 
     function changeOwner(address newOwner, address target) external {
         require(owners[target] == msg.sender, "account-guard/only-proxy-owner");
         owners[target] = newOwner;
         allowed[msg.sender][target] = false;
+        emit OwnershipTransfered(newOwner, msg.sender, target);
     }
+
+    event OwnershipTransfered(address newOwner,address indexed oldAddress, address indexed proxy);
+    event PermissionGranted(address indexed caller, address indexed proxy);
+    event PermissionRevoked(address indexed caller, address indexed proxy);
 }
