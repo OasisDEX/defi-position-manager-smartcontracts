@@ -20,12 +20,12 @@ contract AccountGuard is Ownable {
         whitelisted[target] = status;
     }
 
-    function canCall(address proxy, address operator)
+    function canCall(address target, address operator)
         external
         view
         returns (bool)
     {
-        return owners[proxy] == operator || allowed[operator][proxy];
+        return owners[target] == operator || allowed[operator][target];
     }
 
     function initializeFactory() public {
