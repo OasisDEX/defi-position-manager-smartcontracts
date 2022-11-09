@@ -136,7 +136,7 @@ export function getCommandAddress(
       return addresses.AUTOMATION_AUTO_TP_COMMAND;
     case TriggerType.BASIC_BUY:
       return addresses.AUTOMATION_BASIC_BUY_COMMAND;
-    case TriggerType.BASIC_SELL:
+    case TriggerType.BasicSell:
       return addresses.AUTOMATION_BASIC_SELL_COMMAND;
     default:
       throw new Error(`Cannot get command address. Trigger Type: ${type}`);

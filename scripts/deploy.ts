@@ -1,6 +1,22 @@
 import { ethers } from "hardhat";
 
+async function cancelTx(nonce: number, gasPriceInGwei: number, signer: Signer) {
+  console.log(`🛰 Replacing tx with nonce ${nonce}`)
+  const tx = await signer.sendTransaction({
+      value: 0,
+      gasPrice: gasPriceInGwei * 1000_000_000,
+      to: await signer.getAddress(),
+      nonce: nonce
+  })
+  console.log(`🛰 Tx sent ${tx.hash}`)
+}
+
+
 async function main() {
+  const [deployer] = await ethers.getSigners();
+
+  
+  console.log("Deploying contracts with the account:", deployer.address);
   const Guard = await ethers.getContractFactory("AccountGuard");
   const guardInstance = await Guard.deploy();
 
@@ -26,24 +42,14 @@ async function main() {
   );
 
   const receipt3 = await accountFactoryInstance.deployed();
+  
   console.log(
     "AccountFactory gas ",
     receipt3.deployTransaction.gasLimit.toString()
   );
 
-  const tx = await accountFactoryInstance["createAccount(uint32)"](0);
-  const txReceipt = await tx.wait();
-  console.log("first account ", txReceipt.gasUsed.toString());
-
-  const tx2 = await accountFactoryInstance["createAccount(uint32)"](0);
-  const txReceipt2 = await tx2.wait();
-  console.log("second account ", txReceipt2.gasUsed.toString());
-
-  const tx3 = await accountFactoryInstance
-    .connect(await ethers.provider.getSigner(2))
-    ["createAccount(uint32)"](1);
-  const txReceipt3 = await tx3.wait();
 }
+
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.

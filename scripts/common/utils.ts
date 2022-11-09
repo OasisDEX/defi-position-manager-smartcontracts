@@ -92,7 +92,7 @@ function getTriggerDataTypes(triggerType: TriggerType) {
         "uint64",
         `uint32`,
       ];
-    case TriggerType.BASIC_SELL:
+    case TriggerType.BasicSell:
       // uint256 cdpId, uint16 triggerType, uint256 execCollRatio, uint256 targetCollRatio, uint256 minSellPrice, uint64 deviation, uint32 baseFee
       return [
         "uint256",
@@ -168,7 +168,7 @@ export function decodeBasicBuyData(data: string) {
 
 export function decodeBasicSellData(data: string) {
   const [vault, type, exec, target, minPrice, cont, deviation, maxBaseFee] =
-    decodeTriggerData(TriggerType.BASIC_SELL, data);
+    decodeTriggerData(TriggerType.BasicSell, data);
   return {
     vaultId: new BigNumber(vault.toString()),
     type: new BigNumber(type.toString()),
@@ -276,7 +276,7 @@ export function triggerDataToInfo(triggerData: string, commandAddress: string) {
         `MaxBaseFee: ${maxBaseFee.toFixed()} GWEI`,
       ]);
     }
-    case TriggerType.BASIC_SELL: {
+    case TriggerType.BasicSell: {
       const {
         executionCollRatio,
         targetCollRatio,
