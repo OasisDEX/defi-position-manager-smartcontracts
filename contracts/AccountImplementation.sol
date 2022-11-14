@@ -52,7 +52,7 @@ contract AccountImplementation {
             )
             returndatacopy(0, 0, returndatasize())
             switch succeeded
-            case 1 {
+            case 0 {
                 // throw if delegatecall failed
                 revert(0, returndatasize())
             }
