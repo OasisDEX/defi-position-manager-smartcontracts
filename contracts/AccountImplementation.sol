@@ -8,11 +8,12 @@ import "./AccountGuard.sol";
 contract AccountImplementation {
     AccountGuard public immutable guard;
 
-    modifier authAndWhitelisted(address target) {
+    modifier authAndWhitelisted(address target, bool asDelegateCall) {
         (bool canCall, bool isWhitelisted) = guard.canCallAndWhitelisted(
             address(this),
             msg.sender,
-            target
+            target,
+            asDelegateCall
         );
         require(
             canCall,
@@ -29,7 +30,7 @@ contract AccountImplementation {
         guard = _guard;
     }
 
-    function send(address _target, bytes calldata _data) external payable authAndWhitelisted(_target) {
+    function send(address _target, bytes calldata _data) external payable authAndWhitelisted(_target, false) {
         (bool status, ) = (_target).call{value: msg.value}(_data);
         require(status, "account-guard/call-failed");
     }
@@ -37,7 +38,7 @@ contract AccountImplementation {
     function execute(address _target, bytes memory /* code do not compile with calldata */ _data)
         external
         payable
-        authAndWhitelisted(_target)
+        authAndWhitelisted(_target, true)
         returns (bytes32 response)
     {
         // call contract in current context

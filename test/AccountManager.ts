@@ -216,6 +216,7 @@ describe("Accounts Manager", function () {
     });
 
     it("should emit Narf event if called", async function () {
+      await guard.setWhitelistSend( dummy.address ,true);
       const receipt0 = await (
         await factory.connect(user1)["createAccount()"]()
       ).wait();
@@ -229,6 +230,7 @@ describe("Accounts Manager", function () {
       const receipt = await (
         await account.connect(user1).send(dummy.address, data)
       ).wait();
+      await guard.setWhitelistSend( dummy.address ,false);
       const iface = new utils.Interface([
         "event Narf(address sender, address thisAddress, address self)",
       ]);

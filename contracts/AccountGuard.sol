@@ -8,23 +8,31 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 contract AccountGuard is Ownable {
     address factory;
     mapping(address => mapping(address => bool)) private allowed;
-    mapping(address => bool) private whitelisted;
+    mapping(address => mapping(bool => bool)) private whitelisted;
     mapping(address => address) public owners;
 
     function isWhitelisted(address target) external view returns (bool) {
-        return whitelisted[target];
+        return whitelisted[target][true];
     }
 
     function setWhitelist(address target, bool status) external onlyOwner {
-        whitelisted[target] = status;
+        whitelisted[target][true] = status;
     }
 
-    function canCallAndWhitelisted(address proxy, address operator, address callTarget)
+    function isWhitelistedSend(address target) external view returns (bool) {
+        return whitelisted[target][false];
+    }
+
+    function setWhitelistSend(address target, bool status) external onlyOwner {
+        whitelisted[target][false] = status;
+    }
+
+    function canCallAndWhitelisted(address proxy, address operator, address callTarget, bool asDelegateCall)
         external
         view
         returns (bool, bool)
     {
-        return (allowed[operator][proxy],whitelisted[callTarget]);
+        return (allowed[operator][proxy],whitelisted[callTarget][asDelegateCall]);
     }
 
     function canCall(address target, address operator)
