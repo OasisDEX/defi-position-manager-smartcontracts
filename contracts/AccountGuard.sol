@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity 0.8.17;
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
@@ -18,6 +18,14 @@ contract AccountGuard is Ownable {
 
     function setWhitelist(address target, bool status) public onlyOwner {
         whitelisted[target] = status;
+    }
+
+    function canCallAndWhitelisted(address target, address operator)
+        external
+        view
+        returns (bool, bool)
+    {
+        return ((owners[target] == operator || allowed[operator][target]),whitelisted[target]);
     }
 
     function canCall(address target, address operator)
@@ -48,8 +56,8 @@ contract AccountGuard is Ownable {
             require(owners[target] != caller, "account-guard/cant-deny-owner");
         }
         allowed[caller][target] = allowance;
-        
-        if(allowance){
+
+        if (allowance) {
             emit PermissionGranted(caller, target);
         } else {
             emit PermissionRevoked(caller, target);
@@ -60,10 +68,15 @@ contract AccountGuard is Ownable {
         require(owners[target] == msg.sender, "account-guard/only-proxy-owner");
         owners[target] = newOwner;
         allowed[msg.sender][target] = false;
+        allowed[newOwner][target] = true;
         emit OwnershipTransfered(newOwner, msg.sender, target);
     }
 
-    event OwnershipTransfered(address newOwner,address indexed oldAddress, address indexed proxy);
+    event OwnershipTransfered(
+        address newOwner,
+        address indexed oldAddress,
+        address indexed proxy
+    );
     event PermissionGranted(address indexed caller, address indexed proxy);
     event PermissionRevoked(address indexed caller, address indexed proxy);
 }

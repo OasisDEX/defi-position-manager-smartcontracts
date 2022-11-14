@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity 0.8.17;
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
@@ -8,10 +8,18 @@ import "./AccountGuard.sol";
 contract AccountImplementation {
     AccountGuard public immutable guard;
 
-    modifier auth() {
+    modifier authAndWhitelisted() {
+        (bool isWhitelisted, bool canCall) = guard.canCallAndWhitelisted(
+            address(this),
+            msg.sender
+        );
         require(
-            guard.canCall(address(this), msg.sender),
+            canCall,
             "account-guard/not-owner"
+        );
+        require(
+            isWhitelisted,
+            "account-guard/illegal-target"
         );
         _;
     }
@@ -20,9 +28,7 @@ contract AccountImplementation {
         guard = _guard;
     }
 
-    function send(address _target, bytes memory _data) public payable auth {
-        require(_target != address(0x0));
-        require(guard.isWhitelisted(_target), "account-guard/illegal-target");
+    function send(address _target, bytes memory _data) public payable authAndWhitelisted {
         (bool status, ) = (_target).call{value: msg.value}(_data);
         require(status, "account-guard/call-failed");
     }
@@ -30,12 +36,9 @@ contract AccountImplementation {
     function execute(address _target, bytes memory _data)
         public
         payable
-        auth
+        authAndWhitelisted
         returns (bytes32 response)
     {
-        require(_target != address(0x0));
-        require(guard.isWhitelisted(_target), "account-guard/illegal-target");
-
         // call contract in current context
         assembly {
             let succeeded := delegatecall(
