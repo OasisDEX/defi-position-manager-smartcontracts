@@ -5,14 +5,9 @@ pragma solidity 0.8.17;
 // import "hardhat/console.sol";
 import {AccountGuard} from "./AccountGuard.sol";
 import {AccountImplementation} from "./AccountImplementation.sol";
-import {IProxyRegistry} from "./interfaces/IProxyRegistry.sol";
-import {ManagerLike} from "./interfaces/ManagerLike.sol";
-import {IServiceRegistry} from "./interfaces/IServiceRegistry.sol";
-import {Constants} from "./utils/Constants.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import "hardhat/console.sol";
 
-contract AccountFactory is Constants {
+contract AccountFactory {
     address public immutable proxyTemplate;
     AccountGuard public immutable guard;
     uint256 public accountsGlobalCounter;
@@ -32,17 +27,16 @@ contract AccountFactory is Constants {
     }
 
     function createAccount(address user) public returns (address) {
-        accountsGlobalCounter++;
+        require(user != address(0), "account-factory/zero-address");
+        uint globalCounter = ++accountsGlobalCounter;
         address clone = Clones.clone(proxyTemplate);
         guard.permit(user, clone, true);
-        emit AccountCreated(clone, user, accountsGlobalCounter);
-        //TODO: decide if we want this information onchain
-        //accounts[accountsGlobalCounter] = clone;
+        emit AccountCreated(clone, user, globalCounter);
         return clone;
     }
 
     event AccountCreated(
-        address proxy,
+        address indexed proxy,
         address indexed user,
         uint256 indexed vaultId
     );

@@ -8,10 +8,11 @@ import "./AccountGuard.sol";
 contract AccountImplementation {
     AccountGuard public immutable guard;
 
-    modifier authAndWhitelisted() {
-        (bool isWhitelisted, bool canCall) = guard.canCallAndWhitelisted(
+    modifier authAndWhitelisted(address target) {
+        (bool canCall, bool isWhitelisted) = guard.canCallAndWhitelisted(
             address(this),
-            msg.sender
+            msg.sender,
+            target
         );
         require(
             canCall,
@@ -28,15 +29,15 @@ contract AccountImplementation {
         guard = _guard;
     }
 
-    function send(address _target, bytes memory _data) public payable authAndWhitelisted {
+    function send(address _target, bytes calldata _data) external payable authAndWhitelisted(_target) {
         (bool status, ) = (_target).call{value: msg.value}(_data);
         require(status, "account-guard/call-failed");
     }
 
-    function execute(address _target, bytes memory _data)
-        public
+    function execute(address _target, bytes memory /* code do not compile with calldata */ _data)
+        external
         payable
-        authAndWhitelisted
+        authAndWhitelisted(_target)
         returns (bytes32 response)
     {
         // call contract in current context
@@ -49,11 +50,14 @@ contract AccountImplementation {
                 0,
                 32
             )
-            response := mload(0) // load delegatecall output
-            switch iszero(succeeded)
+            returndatacopy(0, 0, returndatasize())
+            switch succeeded
             case 1 {
                 // throw if delegatecall failed
-                revert(0, 0)
+                revert(0, returndatasize())
+            }
+            default {
+                response := mload(0)
             }
         }
     }

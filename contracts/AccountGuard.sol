@@ -3,29 +3,28 @@ pragma solidity 0.8.17;
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
-import "@openzeppelin/contracts/proxy/Proxy.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract AccountGuard is Ownable {
-    address factory = address(0);
+    address factory;
     mapping(address => mapping(address => bool)) private allowed;
     mapping(address => bool) private whitelisted;
     mapping(address => address) public owners;
 
-    function isWhitelisted(address target) public view returns (bool) {
+    function isWhitelisted(address target) external view returns (bool) {
         return whitelisted[target];
     }
 
-    function setWhitelist(address target, bool status) public onlyOwner {
+    function setWhitelist(address target, bool status) external onlyOwner {
         whitelisted[target] = status;
     }
 
-    function canCallAndWhitelisted(address target, address operator)
+    function canCallAndWhitelisted(address proxy, address operator, address callTarget)
         external
         view
         returns (bool, bool)
     {
-        return ((owners[target] == operator || allowed[operator][target]),whitelisted[target]);
+        return (allowed[operator][proxy],whitelisted[callTarget]);
     }
 
     function canCall(address target, address operator)
@@ -36,7 +35,7 @@ contract AccountGuard is Ownable {
         return owners[target] == operator || allowed[operator][target];
     }
 
-    function initializeFactory() public {
+    function initializeFactory() external {
         require(factory == address(0), "account-guard/factory-set");
         factory = msg.sender;
     }
@@ -48,9 +47,9 @@ contract AccountGuard is Ownable {
     ) external {
         require(
             allowed[msg.sender][target] || msg.sender == factory,
-            "account-guard/not-owner"
+            "account-guard/no-permit"
         );
-        if (msg.sender == factory && allowance) {
+        if (msg.sender == factory) {
             owners[target] = caller;
         } else {
             require(owners[target] != caller, "account-guard/cant-deny-owner");
@@ -65,15 +64,16 @@ contract AccountGuard is Ownable {
     }
 
     function changeOwner(address newOwner, address target) external {
+        require(newOwner != address(0), "account-guard/zero-address");
         require(owners[target] == msg.sender, "account-guard/only-proxy-owner");
         owners[target] = newOwner;
         allowed[msg.sender][target] = false;
         allowed[newOwner][target] = true;
-        emit OwnershipTransfered(newOwner, msg.sender, target);
+        emit ProxyOwnershipTransfered(newOwner, msg.sender, target);
     }
 
-    event OwnershipTransfered(
-        address newOwner,
+    event ProxyOwnershipTransfered(
+        address indexed newOwner,
         address indexed oldAddress,
         address indexed proxy
     );
