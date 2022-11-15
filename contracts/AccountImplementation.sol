@@ -47,6 +47,8 @@ contract AccountImplementation {
         external
         payable
         authAndWhitelisted(_target, true)
+
+        returns (bytes32)
     {
         // call contract in current context
         assembly {

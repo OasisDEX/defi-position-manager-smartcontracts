@@ -168,7 +168,23 @@ describe("Accounts Manager", function () {
       const data = dummy.interface.encodeFunctionData("call1");
       await account.connect(user1).execute(dummy.address, data);
     });
-
+    it("should be able to call Dummy logic and retrieve return data", async function () {
+      const receipt = await (
+        await factory.connect(user1)["createAccount()"]()
+      ).wait();
+      const account = await ethers.getContractAt(
+        "AccountImplementation",
+        receipt.events![1].args!.proxy
+      );
+      const data = dummy.interface.encodeFunctionData("call1");
+      const staticData = await account
+        .connect(user1)
+        .callStatic.execute(dummy.address, data);
+      await account.connect(user1).execute(dummy.address, data);
+      expect(staticData).to.be.equal(
+        "0x0000000000000000000000000000000000000000000000000000000000000001"
+      );
+    });
     it("should fail if calling not whitelisted address", async function () {
       const receipt = await (
         await factory.connect(user1)["createAccount()"]()
@@ -183,6 +199,7 @@ describe("Accounts Manager", function () {
       let tx = account.connect(user1).execute(guard.address, data);
       await expect(tx).to.be.revertedWith("account-guard/illegal-target");
       tx = account.connect(user1).execute(await user2.getAddress(), data);
+
       await expect(tx).to.be.revertedWith("account-guard/illegal-target");
     });
 
