@@ -13,9 +13,13 @@ contract MakerMigrationsActions is Constants {
 
     mapping(address => address) public migrated;
 
-    address public immutable self;
+    address private immutable self;
 
     constructor(IServiceRegistry _serviceRegistry) {
+        require(
+            address(_serviceRegistry) != address(0x0),
+            "factory/wrong-service-registry"
+        );
         serviceRegistry = _serviceRegistry;
         self = address(this);
     }
@@ -44,6 +48,7 @@ contract MakerMigrationsActions is Constants {
             serviceRegistry.getRegisteredService(ACCOUNT_FACTORY_KEY)
         );
         newProxy = _factory.createAccount(msg.sender);
+        migrated[msg.sender] = newProxy;
         uint256[] memory _cdpIds = cdpIds;
         uint256 length = _cdpIds.length;
         for (uint256 i; i < length; i++) {
@@ -61,7 +66,7 @@ contract MakerMigrationsActions is Constants {
         onlyDelegate
         returns (address newProxy)
     {
-        require(migrated[msg.sender] != address(0), "factory/already-migrated");
+        require(migrated[msg.sender] != address(0), "factory/not-yet-migrated");
         ManagerLike manager = ManagerLike(
             serviceRegistry.getRegisteredService(CDP_MANAGER_KEY)
         );
