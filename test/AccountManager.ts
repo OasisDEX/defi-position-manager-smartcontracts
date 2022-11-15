@@ -181,15 +181,9 @@ describe("Accounts Manager", function () {
 
       const data = dummy.interface.encodeFunctionData("call1");
       let tx = account.connect(user1).execute(guard.address, data);
-      await expect(tx).to.be.revertedWithCustomError(
-        account,
-        "AuthenticationError"
-      );
+      await expect(tx).to.be.revertedWith("account-guard/illegal-target");
       tx = account.connect(user1).execute(await user2.getAddress(), data);
-      await expect(tx).to.be.revertedWithCustomError(
-        account,
-        "AuthenticationError"
-      );
+      await expect(tx).to.be.revertedWith("account-guard/illegal-target");
     });
 
     it("should emit Narf event if executed", async function () {

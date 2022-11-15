@@ -5,8 +5,6 @@ pragma solidity 0.8.17;
 // import "hardhat/console.sol";
 import "./AccountGuard.sol";
 
-error AuthenticationError(bool canCall, bool isWhitelisted);
-
 contract AccountImplementation {
     AccountGuard public immutable guard;
 
@@ -17,9 +15,14 @@ contract AccountImplementation {
             target,
             asDelegateCall
         );
-        if (!canCall || !isWhitelisted) {
-            revert AuthenticationError(canCall, isWhitelisted);
-        }
+        require(
+            canCall,
+            "account-guard/not-owner"
+        );
+        require(
+            isWhitelisted,
+            "account-guard/illegal-target"
+        );
         _;
     }
 
