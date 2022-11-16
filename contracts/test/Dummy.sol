@@ -12,8 +12,9 @@ contract Dummy {
         _self = address(this);
     }
 
-    function call1() public {
+    function call1() public returns (bool) {
         emit Narf(msg.sender, address(this), _self);
+        return true;
     }
 
     function call2() public {

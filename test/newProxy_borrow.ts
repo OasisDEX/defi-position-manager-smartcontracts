@@ -33,9 +33,7 @@ describe("Borrow - new Proxy", function () {
     const guard = await (await Guard.deploy()).deployed();
 
     const AccountFactory = await ethers.getContractFactory("AccountFactory");
-    const factory = await AccountFactory.deploy(
-      guard.address
-    );
+    const factory = await AccountFactory.deploy(guard.address);
 
     const proxyAction = await ethers.getContractAt(
       "IDssProxyActions",
@@ -76,8 +74,12 @@ describe("Borrow - new Proxy", function () {
     user2 = ethers.provider.getSigner(3);
     ({ guard, factory, dummy, proxyAction, cdpManager, mcdView } =
       await loadFixture(deployFreshFactory));
-    const recipt1 = await (await factory.connect(user1)["createAccount()"]()).wait();
-    const recipt2 = await (await factory.connect(user2)["createAccount()"]()).wait();
+    const recipt1 = await (
+      await factory.connect(user1)["createAccount()"]()
+    ).wait();
+    const recipt2 = await (
+      await factory.connect(user2)["createAccount()"]()
+    ).wait();
     const firstAccountAddress = recipt1.events![1].args!.proxy;
     const secondAccountAddress = recipt2.events![1].args!.proxy;
     await factory.connect(user2)["createAccount()"]();

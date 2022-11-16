@@ -16,7 +16,7 @@
     "@typechain/hardhat": "^6.1.2",
     "@types/chai": "^4.2.0",
     "@types/mocha": "^9.1.0",
-    "@types/node": ">=12.0.0",
+    "@types/node": "^18.11.9",
     "@types/ramda": "^0.28.15",
     "axios": "^1.1.2",
     "chai": "^4.2.0",
@@ -35,9 +35,9 @@
   },
   "scripts": {
     "format": "./node_modules/.bin/prettier --write contracts/*.sol contracts/**/*.sol test/**/*.ts scripts/**/*.ts",
-    "test" : "npx hardhat test"
+    "test": "npx hardhat test"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^4.7.3"
+    "@openzeppelin/contracts": "4.7.3"
   }
 }

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.9;
+pragma solidity 0.8.17;
 
 // Uncomment this line to use console.log
 // import "hardhat/console.sol";
@@ -8,34 +8,48 @@ import "./AccountGuard.sol";
 contract AccountImplementation {
     AccountGuard public immutable guard;
 
-    modifier auth() {
+    modifier authAndWhitelisted(address target, bool asDelegateCall) {
+        (bool canCall, bool isWhitelisted) = guard.canCallAndWhitelisted(
+            address(this),
+            msg.sender,
+            target,
+            asDelegateCall
+        );
         require(
-            guard.canCall(address(this), msg.sender),
+            canCall,
             "account-guard/not-owner"
+        );
+        require(
+            isWhitelisted,
+            "account-guard/illegal-target"
         );
         _;
     }
 
     constructor(AccountGuard _guard) {
+        require(
+            address(_guard) != address(0x0),
+            "account-guard/wrong-guard-address"
+        );
         guard = _guard;
     }
 
-    function send(address _target, bytes memory _data) public payable auth {
-        require(_target != address(0x0));
-        require(guard.isWhitelisted(_target), "account-guard/illegal-target");
+    function send(address _target, bytes calldata _data)
+        external
+        payable
+        authAndWhitelisted(_target, false)
+    {
         (bool status, ) = (_target).call{value: msg.value}(_data);
         require(status, "account-guard/call-failed");
     }
 
-    function execute(address _target, bytes memory _data)
-        public
+    function execute(address _target, bytes memory /* code do not compile with calldata */ _data)
+        external
         payable
-        auth
-        returns (bytes32 response)
-    {
-        require(_target != address(0x0));
-        require(guard.isWhitelisted(_target), "account-guard/illegal-target");
+        authAndWhitelisted(_target, true)
 
+        returns (bytes32)
+    {
         // call contract in current context
         assembly {
             let succeeded := delegatecall(
@@ -46,11 +60,14 @@ contract AccountImplementation {
                 0,
                 32
             )
-            response := mload(0) // load delegatecall output
-            switch iszero(succeeded)
-            case 1 {
+            returndatacopy(0, 0, returndatasize())
+            switch succeeded
+            case 0 {
                 // throw if delegatecall failed
-                revert(0, 0)
+                revert(0, returndatasize())
+            }
+            default {
+                return(0, 0x20)
             }
         }
     }
