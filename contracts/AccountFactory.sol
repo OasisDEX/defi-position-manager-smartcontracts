@@ -21,12 +21,12 @@ contract AccountFactory {
         proxyTemplate = adr;
     }
 
-    function createAccount() public returns (address clone) {
-        clone = createAccount(msg.sender);
+    function createAccount() external returns (address clone) {
+        clone = this.createAccount(msg.sender);
         return clone;
     }
 
-    function createAccount(address user) public returns (address) {
+    function createAccount(address user) external returns (address) {
         require(user != address(0), "account-factory/zero-address");
         uint globalCounter = ++accountsGlobalCounter;
         address clone = Clones.clone(proxyTemplate);
