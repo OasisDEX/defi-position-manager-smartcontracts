@@ -7,24 +7,26 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 
 contract AccountGuard is Ownable {
     address factory;
+    uint8 constant WHITELISTED_EXECUTE_MASK = 1;
+    uint8 constant WHITELISTED_SEND_MASK = 2;
     mapping(address => mapping(address => bool)) private allowed;
-    mapping(address => mapping(bool => bool)) private whitelisted;
+    mapping(address => uint8) private whitelisted;
     mapping(address => address) public owners;
 
-    function isWhitelisted(address target) external view returns (bool) {
-        return whitelisted[target][true];
+    function isWhitelisted(address target) public view returns (bool) {
+        return (whitelisted[target] & WHITELISTED_EXECUTE_MASK)>0;
     }
 
     function setWhitelist(address target, bool status) external onlyOwner {
-        whitelisted[target][true] = status;
+        whitelisted[target] = status ? whitelisted[target] | WHITELISTED_EXECUTE_MASK : whitelisted[target] & ~WHITELISTED_EXECUTE_MASK;
     }
 
-    function isWhitelistedSend(address target) external view returns (bool) {
-        return whitelisted[target][false];
+    function isWhitelistedSend(address target) public view returns (bool) {
+        return (whitelisted[target] & WHITELISTED_SEND_MASK)>0;
     }
 
     function setWhitelistSend(address target, bool status) external onlyOwner {
-        whitelisted[target][false] = status;
+        whitelisted[target] = status ? whitelisted[target] | WHITELISTED_SEND_MASK : whitelisted[target] & ~WHITELISTED_SEND_MASK;
     }
 
     function canCallAndWhitelisted(address proxy, address operator, address callTarget, bool asDelegateCall)
@@ -32,7 +34,7 @@ contract AccountGuard is Ownable {
         view
         returns (bool, bool)
     {
-        return (allowed[operator][proxy],whitelisted[callTarget][asDelegateCall]);
+        return (allowed[operator][proxy],asDelegateCall?isWhitelisted(callTarget):isWhitelistedSend(callTarget));
     }
 
     function canCall(address target, address operator)
@@ -77,10 +79,10 @@ contract AccountGuard is Ownable {
         owners[target] = newOwner;
         allowed[msg.sender][target] = false;
         allowed[newOwner][target] = true;
-        emit ProxyOwnershipTransfered(newOwner, msg.sender, target);
+        emit ProxyOwnershipTransferred(newOwner, msg.sender, target);
     }
 
-    event ProxyOwnershipTransfered(
+    event ProxyOwnershipTransferred(
         address indexed newOwner,
         address indexed oldAddress,
         address indexed proxy

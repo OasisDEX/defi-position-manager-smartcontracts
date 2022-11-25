@@ -17,7 +17,7 @@ contract AccountImplementation {
         );
         require(
             canCall,
-            "account-guard/not-owner"
+            "account-guard/no-permit"
         );
         require(
             isWhitelisted,
