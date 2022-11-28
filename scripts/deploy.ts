@@ -20,8 +20,7 @@ async function main() {
   const Guard = await ethers.getContractFactory("AccountGuard");
   const guardInstance = await Guard.deploy();
 
-  const receipt = await guardInstance.deployed();
-  console.log("Guard gas ", receipt.deployTransaction.gasLimit.toString());
+  await guardInstance.deployed();
 
   const AccountImplementation = await ethers.getContractFactory(
     "AccountImplementation"
@@ -30,23 +29,18 @@ async function main() {
     guardInstance.address
   );
 
-  const receipt2 = await implementationInstance.deployed();
-  console.log(
-    "AccountImplementation gas ",
-    receipt2.deployTransaction.gasLimit.toString()
-  );
+  await implementationInstance.deployed();
 
   const AccountFactory = await ethers.getContractFactory("AccountFactory");
   const accountFactoryInstance = await AccountFactory.deploy(
     guardInstance.address
   );
 
-  const receipt3 = await accountFactoryInstance.deployed();
+  await accountFactoryInstance.deployed();
   
-  console.log(
-    "AccountFactory gas ",
-    receipt3.deployTransaction.gasLimit.toString()
-  );
+  console.log("AccountFactory deployed to:", accountFactoryInstance.address);
+  console.log("AccountImplementation deployed to:", implementationInstance.address);
+  console.log("AccountGuard deployed to:", guardInstance.address);
 
 }
 
