@@ -92,7 +92,7 @@ function getTriggerDataTypes(triggerType: TriggerType) {
         "uint64",
         `uint32`,
       ];
-    case TriggerType.BasicSell:
+    case TriggerType.BASIC_SELL:
       // uint256 cdpId, uint16 triggerType, uint256 execCollRatio, uint256 targetCollRatio, uint256 minSellPrice, uint64 deviation, uint32 baseFee
       return [
         "uint256",

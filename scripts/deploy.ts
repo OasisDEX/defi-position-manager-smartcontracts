@@ -17,6 +17,10 @@ async function main() {
 
   
   console.log("Deploying contracts with the account:", deployer.address);
+  await new Promise((res,rej)=>{
+    setTimeout(res, 10000);
+  });
+  console.log("deploying Guard")
   const Guard = await ethers.getContractFactory("AccountGuard");
   const guardInstance = await Guard.deploy();
 
@@ -35,9 +39,9 @@ async function main() {
   const accountFactoryInstance = await AccountFactory.deploy(
     guardInstance.address
   );
-
   await accountFactoryInstance.deployed();
   
+  await guardInstance.transferOwnership("0x060c23F67FEBb04F4b5d5c205633a04005985a94");
   console.log("AccountFactory deployed to:", accountFactoryInstance.address);
   console.log("AccountImplementation deployed to:", implementationInstance.address);
   console.log("AccountGuard deployed to:", guardInstance.address);

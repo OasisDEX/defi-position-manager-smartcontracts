@@ -61,6 +61,7 @@ contract AccountGuard is Ownable {
         );
         if (msg.sender == factory) {
             owners[target] = caller;
+            allowed[target][target] = true;
         } else {
             require(owners[target] != caller, "account-guard/cant-deny-owner");
         }
@@ -71,6 +72,7 @@ contract AccountGuard is Ownable {
         } else {
             emit PermissionRevoked(caller, target);
         }
+
     }
 
     function changeOwner(address newOwner, address target) external {
