@@ -168,6 +168,19 @@ describe("Accounts Manager", function () {
       const data = dummy.interface.encodeFunctionData("call1");
       await account.connect(user1).execute(dummy.address, data);
     });
+    it("should be able to recive Ether", async function () {
+      const receipt = await (
+        await factory.connect(user1)["createAccount()"]()
+      ).wait();
+      const account = await ethers.getContractAt(
+        "AccountImplementation",
+        receipt.events![1].args!.proxy
+      );
+      await user1.sendTransaction({
+        to: account.address,
+        value: ethers.utils.parseEther("1.0"),
+      })
+    });
     it("should be able to call Dummy logic and retrieve return data", async function () {
       const receipt = await (
         await factory.connect(user1)["createAccount()"]()
