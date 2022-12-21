@@ -14,27 +14,37 @@ contract AccountGuard is Ownable {
     mapping(address => address) public owners;
 
     function isWhitelisted(address target) public view returns (bool) {
-        return (whitelisted[target] & WHITELISTED_EXECUTE_MASK)>0;
+        return (whitelisted[target] & WHITELISTED_EXECUTE_MASK) > 0;
     }
 
     function setWhitelist(address target, bool status) external onlyOwner {
-        whitelisted[target] = status ? whitelisted[target] | WHITELISTED_EXECUTE_MASK : whitelisted[target] & ~WHITELISTED_EXECUTE_MASK;
+        whitelisted[target] = status
+            ? whitelisted[target] | WHITELISTED_EXECUTE_MASK
+            : whitelisted[target] & ~WHITELISTED_EXECUTE_MASK;
     }
 
     function isWhitelistedSend(address target) public view returns (bool) {
-        return (whitelisted[target] & WHITELISTED_SEND_MASK)>0;
+        return (whitelisted[target] & WHITELISTED_SEND_MASK) > 0;
     }
 
     function setWhitelistSend(address target, bool status) external onlyOwner {
-        whitelisted[target] = status ? whitelisted[target] | WHITELISTED_SEND_MASK : whitelisted[target] & ~WHITELISTED_SEND_MASK;
+        whitelisted[target] = status
+            ? whitelisted[target] | WHITELISTED_SEND_MASK
+            : whitelisted[target] & ~WHITELISTED_SEND_MASK;
     }
 
-    function canCallAndWhitelisted(address proxy, address operator, address callTarget, bool asDelegateCall)
-        external
-        view
-        returns (bool, bool)
-    {
-        return (allowed[operator][proxy],asDelegateCall?isWhitelisted(callTarget):isWhitelistedSend(callTarget));
+    function canCallAndWhitelisted(
+        address proxy,
+        address operator,
+        address callTarget,
+        bool asDelegateCall
+    ) external view returns (bool, bool) {
+        return (
+            allowed[operator][proxy],
+            asDelegateCall
+                ? isWhitelisted(callTarget)
+                : isWhitelistedSend(callTarget)
+        );
     }
 
     function canCall(address target, address operator)
@@ -72,7 +82,6 @@ contract AccountGuard is Ownable {
         } else {
             emit PermissionRevoked(caller, target);
         }
-
     }
 
     function changeOwner(address newOwner, address target) external {

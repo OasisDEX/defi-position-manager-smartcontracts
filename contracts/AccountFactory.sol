@@ -28,7 +28,7 @@ contract AccountFactory {
 
     function createAccount(address user) external returns (address) {
         require(user != address(0), "account-factory/zero-address");
-        uint globalCounter = ++accountsGlobalCounter;
+        uint256 globalCounter = ++accountsGlobalCounter;
         address clone = Clones.clone(proxyTemplate);
         guard.permit(user, clone, true);
         emit AccountCreated(clone, user, globalCounter);

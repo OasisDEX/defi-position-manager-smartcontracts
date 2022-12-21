@@ -71,4 +71,10 @@ contract AccountImplementation {
             }
         }
     }
+ 
+    receive() external payable {
+        emit FundsRecived(msg.sender, msg.value);
+    }
+
+    event FundsRecived(address sender, uint256 amount);
 }
