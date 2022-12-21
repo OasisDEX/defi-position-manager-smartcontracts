@@ -179,7 +179,7 @@ describe("Accounts Manager", function () {
       await user1.sendTransaction({
         to: account.address,
         value: ethers.utils.parseEther("1.0"),
-      })
+      });
     });
     it("should be able to call Dummy logic and retrieve return data", async function () {
       const receipt = await (
