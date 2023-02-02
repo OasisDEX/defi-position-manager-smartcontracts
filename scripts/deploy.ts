@@ -1,3 +1,4 @@
+import { Signer } from "ethers";
 import { ethers } from "hardhat";
 
 async function cancelTx(nonce: number, gasPriceInGwei: number, signer: Signer) {
@@ -25,25 +26,20 @@ async function main() {
   const guardInstance = await Guard.deploy();
 
   await guardInstance.deployed();
+  console.log("whitelisting OperationRunner")
+  await guardInstance.setWhitelist("0xA946f00b58a934824215C1D91346AebbD8702FD4", true);
+  await guardInstance.setWhitelistSend("0xA946f00b58a934824215C1D91346AebbD8702FD4", true);
+  await guardInstance.setWhitelist("0x2010D2d932b467928313F86653b28E22A9d6889b", true);
+  await guardInstance.setWhitelistSend("0x2010D2d932b467928313F86653b28E22A9d6889b", true);
 
-  const AccountImplementation = await ethers.getContractFactory(
-    "AccountImplementation"
-  );
-  const implementationInstance = await AccountImplementation.deploy(
-    guardInstance.address
-  );
-
-  await implementationInstance.deployed();
-
+  console.log("deploying AccountFactory")
   const AccountFactory = await ethers.getContractFactory("AccountFactory");
   const accountFactoryInstance = await AccountFactory.deploy(
     guardInstance.address
   );
   await accountFactoryInstance.deployed();
   
-  await guardInstance.transferOwnership("0x060c23F67FEBb04F4b5d5c205633a04005985a94");
   console.log("AccountFactory deployed to:", accountFactoryInstance.address);
-  console.log("AccountImplementation deployed to:", implementationInstance.address);
   console.log("AccountGuard deployed to:", guardInstance.address);
 
 }
